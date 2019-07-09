@@ -694,15 +694,22 @@ static void ReadNodeHierarchy(
   }
 
   // Set the initial node transform.
+  
   const FbxAMatrix localTransform = pNode->EvaluateLocalTransform();
-  const FbxVector4 localTranslation = localTransform.GetT();
-  const FbxQuaternion localRotation = localTransform.GetQ();
-  const FbxVector4 localScaling = computeLocalScale(pNode);
+  const FbxVector4 localTranslation = localTransform.GetT();  
+  const FbxVector4 localScaling = computeLocalScale(pNode);  
+  const FbxVector4& postRotation = pNode->GetPostRotation(FbxNode::eSourcePivot);
+
+  FbxQuaternion postRotationQuat;
+  postRotationQuat.ComposeSphericalXYZ(postRotation);
+
+  // Not sure that multiplying postRotation is correct but without it direct lights are pointing wrong direction.
+  const FbxQuaternion localRotation = localTransform.GetQ() * postRotationQuat;
 
   node.translation = toVec3f(localTranslation) * scaleFactor;
   node.rotation = toQuatf(localRotation);
   node.scale = toVec3f(localScaling);
-
+  
   if (parentId) {
     RawNode& parentNode = raw.GetNode(raw.GetNodeById(parentId));
     // Add unique child name to the parent node.
@@ -1113,8 +1120,8 @@ bool LoadFBXFile(
   if (sceneSystemUnit != FbxSystemUnit::cm) {
     FbxSystemUnit::cm.ConvertScene(pScene);
   }
-  // this is always 0.01, but let's opt for clarity.
-  scaleFactor = FbxSystemUnit::m.GetConversionFactorFrom(FbxSystemUnit::cm);
+  
+  scaleFactor = options.scaleFactor;
 
   ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
   ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);

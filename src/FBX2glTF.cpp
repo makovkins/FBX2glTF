@@ -54,6 +54,13 @@ int main(int argc, char* argv[]) {
   app.add_flag("-b,--binary", gltfOptions.outputBinary, "Output a single binary format .glb file.");
 
   app.add_option(
+         "--scale-factor",
+         gltfOptions.scaleFactor,
+         "Scale factor.",
+         true)
+      ->check(CLI::Range(0.000001f, 1000000.0f));
+
+  app.add_option(
          "--long-indices",
          [&](std::vector<std::string> choices) -> bool {
            for (const std::string choice : choices) {
