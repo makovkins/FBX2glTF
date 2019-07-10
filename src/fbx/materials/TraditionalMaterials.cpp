@@ -108,6 +108,8 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::reso
   tie(std::ignore, res->texShininess) = getSurfaceScalar("ShininessExponent");
   tie(res->shininess, std::ignore) = getSurfaceScalar("Shininess");
 
+  tie(res->specularFactor, std::ignore) = getSurfaceScalar("SpecularFactor");  
+
   // for transparency we just want a constant vector value;
   FbxVector4 transparency;
   // extract any existing textures only so we can warn that we're throwing them away

@@ -316,16 +316,21 @@ ModelData* Raw2Gltf(
 
           if (material.info->shadingModel == RAW_SHADING_MODEL_BLINN ||
               material.info->shadingModel == RAW_SHADING_MODEL_PHONG) {
-            // blinn/phong hardcoded to 0.4 metallic
-            metallic = 0.4f;
+            
+            metallic = props->specularLevel;
 
             // fairly arbitrary conversion equation, with properties:
-            //   shininess 0 -> roughness 1
-            //   shininess 2 -> roughness ~0.7
-            //   shininess 6 -> roughness 0.5
-            //   shininess 16 -> roughness ~0.33
-            //   as shininess ==> oo, roughness ==> 0
-            auto getRoughness = [&](float shininess) { return sqrtf(2.0f / (2.0f + shininess)); };
+            //   shininess [0..1] -> roughness 1
+            //   shininess 2      -> roughness ~0.9
+            //   shininess 64     -> roughness ~0.4
+            //   shininess 1024   -> roughness 0
+            auto getRoughness = [&](float shininess) { 
+              float rough = 1;
+              if (shininess > 1)
+                rough = 1.0f - log(shininess) / log(1024.0f);
+              rough = std::max(0.0f, std::min(1.0f, rough));
+              return rough;
+            };
 
             aoMetRoughTex = textureBuilder.combine(
                 {
@@ -335,7 +340,7 @@ ModelData* Raw2Gltf(
                 [&](const std::vector<const TextureBuilder::pixel*> pixels)
                     -> TextureBuilder::pixel {
                   // do not multiply with props->shininess; that doesn't work like the other
-                  // factors.
+                  // factors.                  
                   float shininess = props->shininess * (*pixels[0])[0];
                   return {{0, getRoughness(shininess), metallic, 1}};
                 },

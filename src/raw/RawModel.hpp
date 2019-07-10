@@ -201,18 +201,21 @@ struct RawTraditionalMatProps : RawMatProps {
       const Vec4f&& diffuseFactor,
       const Vec3f&& emissiveFactor,
       const Vec3f&& specularFactor,
+      const float specularLevel, 
       const float shininess)
       : RawMatProps(shadingModel),
         ambientFactor(ambientFactor),
         diffuseFactor(diffuseFactor),
         emissiveFactor(emissiveFactor),
         specularFactor(specularFactor),
+        specularLevel(specularLevel),
         shininess(shininess) {}
 
   const Vec3f ambientFactor;
   const Vec4f diffuseFactor;
   const Vec3f emissiveFactor;
   const Vec3f specularFactor;
+  const float specularLevel;
   const float shininess;
 
   bool operator==(const RawMatProps& other) const override {
@@ -220,6 +223,7 @@ struct RawTraditionalMatProps : RawMatProps {
       const auto& typed = (RawTraditionalMatProps&)other;
       return ambientFactor == typed.ambientFactor && diffuseFactor == typed.diffuseFactor &&
           specularFactor == typed.specularFactor && emissiveFactor == typed.emissiveFactor &&
+          specularLevel == typed.specularLevel &&
           shininess == typed.shininess;
     }
     return false;

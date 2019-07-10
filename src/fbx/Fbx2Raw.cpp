@@ -219,6 +219,7 @@ static void ReadMesh(
           Vec4f(.5, .5, .5, 1),
           Vec3f(0, 0, 0),
           Vec3f(0, 0, 0),
+          0.5,
           0.5));
 
     } else {
@@ -280,6 +281,7 @@ static void ReadMesh(
             toVec4f(fbxMatInfo->colDiffuse),
             toVec3f(fbxMatInfo->colEmissive),
             toVec3f(fbxMatInfo->colSpecular),
+            fbxMatInfo->specularFactor,
             fbxMatInfo->shininess));
       }
     }
