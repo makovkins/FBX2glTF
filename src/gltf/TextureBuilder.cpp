@@ -201,7 +201,7 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
 
   } else if (!relativeFilename.empty()) {
     image = new ImageData(relativeFilename, relativeFilename);
-    std::string outputPath = outputFolder + "/" + relativeFilename;
+/*    std::string outputPath = outputFolder + "/" + relativeFilename;
     if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
       if (verboseOutput) {
         fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
@@ -210,7 +210,7 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
       // no point commenting further on read/write error; CopyFile() does enough of that, and we
       // certainly want to to add an image struct to the glTF JSON, with the correct relative path
       // reference, even if the copy failed.
-    }
+    }*/
   }
   if (!image) {
     // fallback is tiny transparent PNG

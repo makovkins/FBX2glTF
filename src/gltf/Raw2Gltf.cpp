@@ -242,8 +242,11 @@ ModelData* Raw2Gltf(
       };
 
       TextureData* normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
+      TextureData* bumpTexture = simpleTex(RAW_TEXTURE_USAGE_BUMP).get();
       TextureData* emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
       TextureData* occlusionTexture = nullptr;
+           
+      float bumpFactor = 1.0f;
 
       std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
       if (options.usePBRMetRough) {
@@ -318,6 +321,7 @@ ModelData* Raw2Gltf(
               material.info->shadingModel == RAW_SHADING_MODEL_PHONG) {
             
             metallic = props->specularLevel;
+            bumpFactor = props->bumpFactor;
 
             // fairly arbitrary conversion equation, with properties:
             //   shininess [0..1] -> roughness 1
@@ -371,6 +375,7 @@ ModelData* Raw2Gltf(
       std::shared_ptr<KHRCmnUnlitMaterial> khrCmnUnlitMat;
       if (options.useKHRMatUnlit) {
         normalTexture = nullptr;
+        bumpTexture = nullptr;
 
         emissiveTexture = nullptr;
         emissiveFactor = Vec3f(0.00f, 0.00f, 0.00f);
@@ -405,6 +410,8 @@ ModelData* Raw2Gltf(
           occlusionTexture,
           emissiveTexture,
           emissiveFactor * emissiveIntensity,
+          bumpTexture,
+          bumpFactor,
           khrCmnUnlitMat,
           pbrMetRough));
       materialsById[material.id] = mData;

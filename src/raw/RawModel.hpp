@@ -121,6 +121,7 @@ enum RawTextureUsage {
   RAW_TEXTURE_USAGE_AMBIENT,
   RAW_TEXTURE_USAGE_DIFFUSE,
   RAW_TEXTURE_USAGE_NORMAL,
+  RAW_TEXTURE_USAGE_BUMP,
   RAW_TEXTURE_USAGE_SPECULAR,
   RAW_TEXTURE_USAGE_SHININESS,
   RAW_TEXTURE_USAGE_EMISSIVE,
@@ -142,6 +143,8 @@ inline std::string Describe(RawTextureUsage usage) {
       return "diffuse";
     case RAW_TEXTURE_USAGE_NORMAL:
       return "normal";
+    case RAW_TEXTURE_USAGE_BUMP:
+      return "bump";
     case RAW_TEXTURE_USAGE_SPECULAR:
       return "specular";
     case RAW_TEXTURE_USAGE_SHININESS:
@@ -202,14 +205,16 @@ struct RawTraditionalMatProps : RawMatProps {
       const Vec3f&& emissiveFactor,
       const Vec3f&& specularFactor,
       const float specularLevel, 
-      const float shininess)
+      const float shininess,
+      float bumpFactor)
       : RawMatProps(shadingModel),
         ambientFactor(ambientFactor),
         diffuseFactor(diffuseFactor),
         emissiveFactor(emissiveFactor),
         specularFactor(specularFactor),
         specularLevel(specularLevel),
-        shininess(shininess) {}
+        shininess(shininess),
+        bumpFactor(bumpFactor) {}
 
   const Vec3f ambientFactor;
   const Vec4f diffuseFactor;
@@ -217,14 +222,15 @@ struct RawTraditionalMatProps : RawMatProps {
   const Vec3f specularFactor;
   const float specularLevel;
   const float shininess;
+  const float bumpFactor;
 
   bool operator==(const RawMatProps& other) const override {
     if (RawMatProps::operator==(other)) {
       const auto& typed = (RawTraditionalMatProps&)other;
       return ambientFactor == typed.ambientFactor && diffuseFactor == typed.diffuseFactor &&
           specularFactor == typed.specularFactor && emissiveFactor == typed.emissiveFactor &&
-          specularLevel == typed.specularLevel &&
-          shininess == typed.shininess;
+          specularLevel == typed.specularLevel && shininess == typed.shininess &&
+          bumpFactor == typed.bumpFactor && bumpFactor == typed.bumpFactor;
     }
     return false;
   }
@@ -245,7 +251,7 @@ struct RawMetRoughMatProps : RawMatProps {
         emissiveIntensity(emissiveIntensity),
         metallic(metallic),
         roughness(roughness),
-        invertRoughnessMap(invertRoughnessMap) {}
+        invertRoughnessMap(invertRoughnessMap){}
   const Vec4f diffuseFactor;
   const Vec3f emissiveFactor;
   const float emissiveIntensity;

@@ -28,9 +28,11 @@ struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
   FbxFileTexture* texEmissive{};
   FbxVector4 colEmissive{};
   FbxFileTexture* texNormal{};
+  FbxFileTexture* texBump{};
   FbxFileTexture* texShininess{};
   FbxDouble shininess{};
   FbxDouble specularFactor{};
+  FbxDouble bumpFactor{};
 };
 
 class FbxTraditionalMaterialResolver : FbxMaterialResolver<FbxTraditionalMaterialInfo> {

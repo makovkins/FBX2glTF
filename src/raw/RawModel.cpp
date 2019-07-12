@@ -585,6 +585,9 @@ void RawModel::CreateMaterialModels(
             keep |= RAW_VERTEX_ATTRIBUTE_NORMAL | RAW_VERTEX_ATTRIBUTE_TANGENT |
                 RAW_VERTEX_ATTRIBUTE_BINORMAL | RAW_VERTEX_ATTRIBUTE_UV0;
           }
+          if (mat.textures[RAW_TEXTURE_USAGE_BUMP] != -1) {
+            keep |= RAW_VERTEX_ATTRIBUTE_UV0;
+          }
           if (mat.textures[RAW_TEXTURE_USAGE_SPECULAR] != -1) {
             keep |= RAW_VERTEX_ATTRIBUTE_NORMAL | RAW_VERTEX_ATTRIBUTE_UV0;
           }

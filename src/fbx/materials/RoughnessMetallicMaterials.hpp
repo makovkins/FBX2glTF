@@ -39,7 +39,7 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
   FbxDouble baseWeight = 1;
   FbxVector4 emissive = FbxVector4(0, 0, 0, 1);
   FbxDouble emissiveIntensity = 1;
-
+  
   const FbxFileTexture* texNormal = nullptr;
   const FbxFileTexture* texBaseColor = nullptr;
   const FbxFileTexture* texBaseWeight = nullptr;

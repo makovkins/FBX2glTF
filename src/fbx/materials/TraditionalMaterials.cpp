@@ -102,13 +102,17 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::reso
 
   // the normal map can only ever be a map, ignore everything else
   tie(std::ignore, res->texNormal) = getSurfaceVector(FbxSurfaceMaterial::sNormalMap);
+  
+  // the bump map can only ever be a map, ignore everything else
+  tie(std::ignore, res->texBump) = getSurfaceVector(FbxSurfaceMaterial::sBump);
+  tie(res->bumpFactor, std::ignore) = getSurfaceScalar("BumpFactor");
 
   // shininess can be a map or a factor; afaict the map is always 'ShininessExponent' and the
   // value is always found in 'Shininess' but only sometimes in 'ShininessExponent'.
   tie(std::ignore, res->texShininess) = getSurfaceScalar("ShininessExponent");
   tie(res->shininess, std::ignore) = getSurfaceScalar("Shininess");
 
-  tie(res->specularFactor, std::ignore) = getSurfaceScalar("SpecularFactor");  
+  tie(res->specularFactor, std::ignore) = getSurfaceScalar("SpecularFactor");
 
   // for transparency we just want a constant vector value;
   FbxVector4 transparency;

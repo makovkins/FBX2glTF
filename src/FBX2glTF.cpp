@@ -307,8 +307,8 @@ int main(int argc, char* argv[]) {
     }
   } else {
     // in gltf mode, we create a folder and write into that
-    outputFolder = fmt::format("{}_out/", outputPath.c_str());
-    modelPath = outputFolder + FileUtils::GetFileName(outputPath) + ".gltf";
+    outputFolder = outputPath + "/";
+    modelPath = outputFolder + FileUtils::GetFileBase(inputPath) + ".gltf";
   }
   if (!FileUtils::CreatePath(modelPath.c_str())) {
     fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());

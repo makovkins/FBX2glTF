@@ -220,7 +220,8 @@ static void ReadMesh(
           Vec3f(0, 0, 0),
           Vec3f(0, 0, 0),
           0.5,
-          0.5));
+          0.5,
+          1.0));
 
     } else {
       materialName = fbxMaterial->name;
@@ -241,7 +242,7 @@ static void ReadMesh(
             static_cast<FbxRoughMetMaterialInfo*>(fbxMaterial.get());
 
         maybeAddTexture(fbxMatInfo->texBaseColor, RAW_TEXTURE_USAGE_ALBEDO);
-        maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
+        maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);        
         maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
         maybeAddTexture(fbxMatInfo->texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
         maybeAddTexture(fbxMatInfo->texMetallic, RAW_TEXTURE_USAGE_METALLIC);
@@ -271,6 +272,7 @@ static void ReadMesh(
         }
         maybeAddTexture(fbxMatInfo->texDiffuse, RAW_TEXTURE_USAGE_DIFFUSE);
         maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
+        maybeAddTexture(fbxMatInfo->texBump, RAW_TEXTURE_USAGE_BUMP);
         maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
         maybeAddTexture(fbxMatInfo->texShininess, RAW_TEXTURE_USAGE_SHININESS);
         maybeAddTexture(fbxMatInfo->texAmbient, RAW_TEXTURE_USAGE_AMBIENT);
@@ -282,7 +284,8 @@ static void ReadMesh(
             toVec3f(fbxMatInfo->colEmissive),
             toVec3f(fbxMatInfo->colSpecular),
             fbxMatInfo->specularFactor,
-            fbxMatInfo->shininess));
+            fbxMatInfo->shininess,
+	    fbxMatInfo->bumpFactor));
       }
     }
 
