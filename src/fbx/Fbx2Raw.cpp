@@ -206,6 +206,8 @@ static void ReadMesh(
     int textures[RAW_TEXTURE_USAGE_MAX];
     std::fill_n(textures, (int)RAW_TEXTURE_USAGE_MAX, -1);
 
+    float materialOpacity = 1.0;
+
     std::shared_ptr<RawMatProps> rawMatProps;
     FbxString materialName;
     long materialId;
@@ -213,7 +215,8 @@ static void ReadMesh(
     if (fbxMaterial == nullptr) {
       materialName = "DefaultMaterial";
       materialId = -1;
-      rawMatProps.reset(new RawTraditionalMatProps(
+      rawMatProps.reset(
+        new RawTraditionalMatProps(
           RAW_SHADING_MODEL_LAMBERT,
           Vec3f(0, 0, 0),
           Vec4f(.5, .5, .5, 1),
@@ -242,12 +245,13 @@ static void ReadMesh(
             static_cast<FbxRoughMetMaterialInfo*>(fbxMaterial.get());
 
         maybeAddTexture(fbxMatInfo->texBaseColor, RAW_TEXTURE_USAGE_ALBEDO);
-        maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);        
+        maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
         maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
         maybeAddTexture(fbxMatInfo->texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
         maybeAddTexture(fbxMatInfo->texMetallic, RAW_TEXTURE_USAGE_METALLIC);
         maybeAddTexture(fbxMatInfo->texAmbientOcclusion, RAW_TEXTURE_USAGE_OCCLUSION);
-        rawMatProps.reset(new RawMetRoughMatProps(
+        rawMatProps.reset(
+          new RawMetRoughMatProps(
             RAW_SHADING_MODEL_PBR_MET_ROUGH,
             toVec4f(fbxMatInfo->baseColor),
             toVec3f(fbxMatInfo->emissive),
@@ -255,6 +259,7 @@ static void ReadMesh(
             fbxMatInfo->metallic,
             fbxMatInfo->roughness,
             fbxMatInfo->invertRoughnessMap));
+        materialOpacity = fbxMatInfo->baseColor[3];
       } else {
         FbxTraditionalMaterialInfo* fbxMatInfo =
             static_cast<FbxTraditionalMaterialInfo*>(fbxMaterial.get());
@@ -277,7 +282,8 @@ static void ReadMesh(
         maybeAddTexture(fbxMatInfo->texShininess, RAW_TEXTURE_USAGE_SHININESS);
         maybeAddTexture(fbxMatInfo->texAmbient, RAW_TEXTURE_USAGE_AMBIENT);
         maybeAddTexture(fbxMatInfo->texSpecular, RAW_TEXTURE_USAGE_SPECULAR);
-        rawMatProps.reset(new RawTraditionalMatProps(
+        rawMatProps.reset(
+          new RawTraditionalMatProps(
             shadingModel,
             toVec3f(fbxMatInfo->colAmbient),
             toVec4f(fbxMatInfo->colDiffuse),
@@ -285,12 +291,17 @@ static void ReadMesh(
             toVec3f(fbxMatInfo->colSpecular),
             fbxMatInfo->specularFactor,
             fbxMatInfo->shininess,
-	    fbxMatInfo->bumpFactor));
+            fbxMatInfo->bumpFactor));
+        materialOpacity = fbxMatInfo->colDiffuse[3];
       }
     }
 
     RawVertex rawVertices[3];
     bool vertexTransparency = false;
+
+    if (materialOpacity < 1)
+      vertexTransparency = true;
+
     for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++, polygonVertexIndex++) {
       const int controlPointIndex = pMesh->GetPolygonVertex(polygonIndex, vertexIndex);
 
@@ -356,15 +367,18 @@ static void ReadMesh(
 
       rawSurface.bounds.AddPoint(vertex.position);
 
-      if (!targetShapes.empty()) {
+      if (!targetShapes.empty()) 
+      {
         vertex.blendSurfaceIx = rawSurfaceIndex;
-        for (const auto* targetShape : targetShapes) {
+        for (const auto* targetShape : targetShapes) 
+        {
           RawBlendVertex blendVertex;
           // the morph target data must be transformed just as with the vertex positions above
           const FbxVector4& shapePosition =
               transform.MultNormalize(targetShape->positions[controlPointIndex]);
           blendVertex.position = toVec3f(shapePosition - fbxPosition) * scaleFactor;
-          if (targetShape->normals.LayerPresent()) {
+          if (targetShape->normals.LayerPresent()) 
+          {
             const FbxVector4& normal = targetShape->normals.GetElement(
                 polygonIndex,
                 polygonVertexIndex,
@@ -374,7 +388,8 @@ static void ReadMesh(
                 true);
             blendVertex.normal = toVec3f(normal - fbxNormal);
           }
-          if (targetShape->tangents.LayerPresent()) {
+          if (targetShape->tangents.LayerPresent()) 
+          {
             const FbxVector4& tangent = targetShape->tangents.GetElement(
                 polygonIndex,
                 polygonVertexIndex,
@@ -386,7 +401,9 @@ static void ReadMesh(
           }
           vertex.blends.push_back(blendVertex);
         }
-      } else {
+      }
+      else 
+      {
         vertex.blendSurfaceIx = -1;
       }
 
@@ -426,7 +443,8 @@ static void ReadMesh(
       }
     }
 
-    if (textures[RAW_TEXTURE_USAGE_NORMAL] != -1) {
+    if (textures[RAW_TEXTURE_USAGE_NORMAL] != -1) 
+    {
       // Distinguish vertices that are used by triangles with a different texture polarity to avoid
       // degenerate tangent space smoothing.
       const bool polarity =
