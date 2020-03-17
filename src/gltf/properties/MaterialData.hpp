@@ -50,6 +50,7 @@ struct MaterialData : Holdable {
       const Vec3f& emissiveFactor,
       const TextureData* bumpTexture,
       float bumpFactor,
+      const TextureData* opacityTexture,
       std::shared_ptr<KHRCmnUnlitMaterial> const khrCmnConstantMaterial,
       std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness);
 
@@ -64,6 +65,7 @@ struct MaterialData : Holdable {
   const Vec3f emissiveFactor;
   const std::unique_ptr<const Tex> bumpTexture;
   const float bumpFactor;
+  const std::unique_ptr<const Tex> opacityTexture;
 
   const std::shared_ptr<const KHRCmnUnlitMaterial> khrCmnConstantMaterial;
   const std::shared_ptr<const PBRMetallicRoughness> pbrMetallicRoughness;

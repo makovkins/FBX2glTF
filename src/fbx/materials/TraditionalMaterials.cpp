@@ -117,16 +117,11 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::reso
   // for transparency we just want a constant vector value;
   FbxVector4 transparency;
   // extract any existing textures only so we can warn that we're throwing them away
-  FbxFileTexture *colTex, *facTex;
-  std::tie(transparency, colTex, facTex) = getSurfaceValues(
+  FbxFileTexture *facTex;
+  std::tie(transparency, res->texOpacity, facTex) = getSurfaceValues(
       FbxSurfaceMaterial::sTransparentColor, FbxSurfaceMaterial::sTransparencyFactor);
-  if (colTex) {
-    fmt::printf(
-        "Warning: Mat [%s]: Can't handle texture for %s; discarding.\n",
-        name,
-        FbxSurfaceMaterial::sTransparentColor);
-  }
-  if (facTex) {
+  if (facTex) 
+  {
     fmt::printf(
         "Warning: Mat [%s]: Can't handle texture for %s; discarding.\n",
         name,

@@ -243,6 +243,7 @@ ModelData* Raw2Gltf(
 
       TextureData* normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
       TextureData* bumpTexture = simpleTex(RAW_TEXTURE_USAGE_BUMP).get();
+      TextureData* opacityTexture = simpleTex(RAW_TEXTURE_USAGE_OPACITY).get();
       TextureData* emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
       TextureData* occlusionTexture = nullptr;
            
@@ -376,6 +377,7 @@ ModelData* Raw2Gltf(
       if (options.useKHRMatUnlit) {
         normalTexture = nullptr;
         bumpTexture = nullptr;
+        opacityTexture = nullptr;
 
         emissiveTexture = nullptr;
         emissiveFactor = Vec3f(0.00f, 0.00f, 0.00f);
@@ -412,6 +414,7 @@ ModelData* Raw2Gltf(
           emissiveFactor * emissiveIntensity,
           bumpTexture,
           bumpFactor,
+          opacityTexture,
           khrCmnUnlitMat,
           pbrMetRough));
       materialsById[material.id] = mData;

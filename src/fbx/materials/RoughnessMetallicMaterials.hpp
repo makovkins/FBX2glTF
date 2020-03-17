@@ -47,7 +47,7 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
   const FbxFileTexture* texRoughness = nullptr;
   const FbxFileTexture* texEmissive = nullptr;
   const FbxFileTexture* texEmissiveWeight = nullptr;
-  const FbxFileTexture* texAmbientOcclusion = nullptr;
+  const FbxFileTexture* texAmbientOcclusion = nullptr;  
 };
 
 class FbxStingrayPBSMaterialResolver : FbxMaterialResolver<FbxRoughMetMaterialInfo> {

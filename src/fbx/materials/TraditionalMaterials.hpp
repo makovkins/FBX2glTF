@@ -33,6 +33,7 @@ struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
   FbxDouble shininess{};
   FbxDouble specularFactor{};
   FbxDouble bumpFactor{};
+  FbxFileTexture* texOpacity{};
 };
 
 class FbxTraditionalMaterialResolver : FbxMaterialResolver<FbxTraditionalMaterialInfo> {

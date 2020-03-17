@@ -78,8 +78,9 @@ MaterialData::MaterialData(
     const TextureData* occlusionTexture,
     const TextureData* emissiveTexture,
     const Vec3f& emissiveFactor,
-    const TextureData* bumpTexture,
+    const TextureData* bumpTexture,    
     float bumpFactor,
+    const TextureData* opacityTexture,
     std::shared_ptr<KHRCmnUnlitMaterial> const khrCmnConstantMaterial,
     std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness)
     : Holdable(),
@@ -92,17 +93,26 @@ MaterialData::MaterialData(
       emissiveFactor(clamp(emissiveFactor)),
       bumpTexture(Tex::ref(bumpTexture)),
       bumpFactor(bumpFactor),
+      opacityTexture(Tex::ref(opacityTexture)),
       khrCmnConstantMaterial(khrCmnConstantMaterial),
       pbrMetallicRoughness(pbrMetallicRoughness) {}
 
-json MaterialData::serialize() const {
-  json result = {{"name", name},
-                 {"alphaMode", isTransparent ? "BLEND" : "OPAQUE"},
+json MaterialData::serialize() const
+{
+  json result = {{"name", name},                 
                  {"extras",
                   {{"fromFBX",
                     {{"shadingModel", Describe(shadingModel)},
                      {"isTruePBR", shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH}}}}}};
 
+  std::string lowerCaseName = name;
+  std::for_each(lowerCaseName.begin(), lowerCaseName.end(), [](char& c) { c = std::tolower(c); });  
+
+  if (lowerCaseName.find("alphatest") != std::string::npos)
+    result["alphaMode"] = "MASK";
+  else
+    result["alphaMode"] = isTransparent ? "BLEND" : "OPAQUE";
+  
   if (normalTexture != nullptr) {
     result["normalTexture"] = *normalTexture;
   }
@@ -120,6 +130,9 @@ json MaterialData::serialize() const {
     result["bumpTexture"] = *bumpTexture;
   if (bumpFactor != 1.0f)
     result["bumpFactor"] = bumpFactor;
+
+  if (opacityTexture != nullptr)
+    result["opacityTexture"] = *opacityTexture;
 
   if (pbrMetallicRoughness != nullptr) {
     result["pbrMetallicRoughness"] = *pbrMetallicRoughness;
