@@ -8,40 +8,46 @@
 
 #include "FbxMaterials.hpp"
 
-struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
-  static constexpr const char* FBX_SHADER_LAMBERT = "Lambert";
-  static constexpr const char* FBX_SHADER_BLINN = "Blinn";
-  static constexpr const char* FBX_SHADER_PHONG = "Phong";
+struct FbxTraditionalMaterialInfo : FbxMaterialInfo
+{
+	static constexpr const char* FBX_SHADER_LAMBERT = "Lambert";
+	static constexpr const char* FBX_SHADER_BLINN = "Blinn";
+	static constexpr const char* FBX_SHADER_PHONG = "Phong";
 
-  FbxTraditionalMaterialInfo(
-      const FbxUInt64 id,
-      const FbxString& name,
-      const FbxString& shadingModel)
-      : FbxMaterialInfo(id, name, shadingModel) {}
+	FbxTraditionalMaterialInfo(
+		const FbxUInt64 id,
+		const FbxString& name,
+		const FbxString& shadingModel)
+		: FbxMaterialInfo(id, name, shadingModel)
+	{
+	}
 
-  FbxFileTexture* texAmbient{};
-  FbxVector4 colAmbient{};
-  FbxFileTexture* texSpecular{};
-  FbxVector4 colSpecular{};
-  FbxFileTexture* texDiffuse{};
-  FbxVector4 colDiffuse{};
-  FbxFileTexture* texEmissive{};
-  FbxVector4 colEmissive{};
-  FbxFileTexture* texNormal{};
-  FbxFileTexture* texBump{};
-  FbxFileTexture* texShininess{};
-  FbxDouble shininess{};
-  FbxDouble specularFactor{};
-  FbxDouble bumpFactor{};
-  FbxFileTexture* texOpacity{};
+	FbxFileTexture* texAmbient{};
+	FbxVector4 colAmbient{};
+	FbxFileTexture* texSpecular{};
+	FbxVector4 colSpecular{};
+	FbxFileTexture* texDiffuse{};
+	FbxVector4 colDiffuse{};
+	FbxFileTexture* texEmissive{};
+	FbxVector4 colEmissive{};
+	FbxFileTexture* texNormal{};
+	FbxFileTexture* texBump{};
+	FbxFileTexture* texShininess{};
+	FbxDouble shininess{};
+	FbxDouble specularFactor{};
+	FbxDouble bumpFactor{};
+	FbxFileTexture* texOpacity{};
 };
 
-class FbxTraditionalMaterialResolver : FbxMaterialResolver<FbxTraditionalMaterialInfo> {
- public:
-  FbxTraditionalMaterialResolver(
-      FbxSurfaceMaterial* fbxMaterial,
-      const std::map<const FbxTexture*, FbxString>& textureLocations)
-      : FbxMaterialResolver(fbxMaterial, textureLocations) {}
+class FbxTraditionalMaterialResolver : FbxMaterialResolver<FbxTraditionalMaterialInfo>
+{
+public:
+	FbxTraditionalMaterialResolver(
+		FbxSurfaceMaterial* fbxMaterial,
+		const std::map<const FbxTexture*, FbxString>& textureLocations)
+		: FbxMaterialResolver(fbxMaterial, textureLocations)
+	{
+	}
 
-  virtual std::unique_ptr<FbxTraditionalMaterialInfo> resolve() const;
+	virtual std::unique_ptr<FbxTraditionalMaterialInfo> resolve() const;
 };

@@ -12,67 +12,55 @@
 
 #include "gltf/Raw2Gltf.hpp"
 
-struct Tex {
-  static std::unique_ptr<Tex> ref(const TextureData* tex, uint32_t texCoord = 0);
-  explicit Tex(uint32_t texRef, uint32_t texCoord);
+struct Tex
+{
+	static std::unique_ptr<Tex> ref(const TextureData* tex, uint32_t texCoord = 0);
+	explicit Tex(uint32_t texRef, uint32_t texCoord);
 
-  const uint32_t texRef;
-  const uint32_t texCoord;
+	const uint32_t texRef;
+	const uint32_t texCoord;
 };
 
-struct KHRCmnUnlitMaterial {
-  KHRCmnUnlitMaterial();
-};
+struct MaterialData : Holdable
+{
+	MaterialData(
+		std::string name,
+		RawShadingModel shadingModel,
+		bool isTransparent,		
+		const TextureData* diffuseTexture,
+		const Vec4f diffuseColor,
+		const TextureData* normalTexture,
+		const TextureData* metallicTexture,
+		const float metallic,
+		const TextureData* roughnessTexture,
+		const float roughness,		
+		const TextureData* occlusionTexture,
+		const TextureData* emissiveTexture,
+		const Vec3f& emissiveColor,
+		const TextureData* bumpTexture,
+		float bumpFactor,
+		const TextureData* opacityTexture);
 
-struct PBRMetallicRoughness {
-  PBRMetallicRoughness(
-      const TextureData* baseColorTexture,
-      const TextureData* metRoughTexture,
-      const Vec4f& baseColorFactor,
-      float metallic = 0.1f,
-      float roughness = 0.6f);
+	json serialize() const override;
 
-  std::unique_ptr<Tex> baseColorTexture;
-  std::unique_ptr<Tex> metRoughTexture;
-  const Vec4f baseColorFactor;
-  const float metallic;
-  const float roughness;
-};
+	const std::string name;
+	const RawShadingModel shadingModel;
+	const bool isTransparent;	
+	const std::unique_ptr<const Tex> diffuseTexture;
+	const Vec4f diffuseColor;
+	const std::unique_ptr<const Tex> normalTexture;
+	const std::unique_ptr<const Tex> metallicTexture;
+	const float metallic;	
+	const std::unique_ptr<const Tex> roughnessTexture;
+	const float roughness;
+	const std::unique_ptr<const Tex> occlusionTexture;
+	const std::unique_ptr<const Tex> emissiveTexture;
+	const Vec3f emissiveColor;
+	const std::unique_ptr<const Tex> bumpTexture;
+	const float bumpFactor;
+	const std::unique_ptr<const Tex> opacityTexture;
 
-struct MaterialData : Holdable {
-  MaterialData(
-      std::string name,
-      bool isTransparent,
-      RawShadingModel shadingModel,
-      const TextureData* normalTexture,
-      const TextureData* occlusionTexture,
-      const TextureData* emissiveTexture,
-      const Vec3f& emissiveFactor,
-      const TextureData* bumpTexture,
-      float bumpFactor,
-      const TextureData* opacityTexture,
-      std::shared_ptr<KHRCmnUnlitMaterial> const khrCmnConstantMaterial,
-      std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness);
-
-  json serialize() const override;
-
-  const std::string name;
-  const RawShadingModel shadingModel;
-  const bool isTransparent;
-  const std::unique_ptr<const Tex> normalTexture;
-  const std::unique_ptr<const Tex> occlusionTexture;
-  const std::unique_ptr<const Tex> emissiveTexture;
-  const Vec3f emissiveFactor;
-  const std::unique_ptr<const Tex> bumpTexture;
-  const float bumpFactor;
-  const std::unique_ptr<const Tex> opacityTexture;
-
-  const std::shared_ptr<const KHRCmnUnlitMaterial> khrCmnConstantMaterial;
-  const std::shared_ptr<const PBRMetallicRoughness> pbrMetallicRoughness;
-
-  std::vector<std::string> userProperties;
+	std::vector<std::string> userProperties;
 };
 
 void to_json(json& j, const Tex& data);
-void to_json(json& j, const KHRCmnUnlitMaterial& d);
-void to_json(json& j, const PBRMetallicRoughness& d);
