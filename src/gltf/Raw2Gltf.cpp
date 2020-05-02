@@ -272,6 +272,8 @@ ModelData* Raw2Gltf(
 			TextureData* opacityTexture = simpleTex(RAW_TEXTURE_USAGE_OPACITY).get();
 			TextureData* emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
 			TextureData* occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
+			if (!occlusionTexture)
+				occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_AMBIENT).get();
 		
 			/**
 			 * Traditional FBX Material -> PBR Met/Rough glTF.
