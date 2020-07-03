@@ -52,9 +52,12 @@ static RawMaterialType GetMaterialType(
 	// transparency.
 	int diffuseTexture = textures[RAW_TEXTURE_USAGE_DIFFUSE];
 	if (diffuseTexture < 0)
-	{
 		diffuseTexture = textures[RAW_TEXTURE_USAGE_ALBEDO];
-	}
+
+	int opacityTexture = textures[RAW_TEXTURE_USAGE_OPACITY];
+	if (opacityTexture >= 0)
+		return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
+	
 	// determine material type based on texture occlusion.
 	if (diffuseTexture >= 0)
 	{
