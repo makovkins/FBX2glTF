@@ -103,6 +103,9 @@ json MaterialData::serialize() const
 	else
 		result["alphaMode"] = isTransparent ? "BLEND" : "OPAQUE";
 
+	if (lowerCaseName.find("twosided") != std::string::npos)
+		result["doubleSided"] = true;
+
 	if (diffuseTexture != nullptr)
 		result["diffuseTexture"] = *diffuseTexture;
 	result["diffuseColor"] = toStdVec(diffuseColor);
