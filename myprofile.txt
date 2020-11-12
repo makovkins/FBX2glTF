@@ -1,0 +1,15 @@
+[env]
+# Where is our C compiler
+#CC=/usr/bin/x86_64-w64-mingw32-gcc
+# Where is our CPP compiler
+#CXX=/usr/bin/x86_64-w64-mingw32-g++
+
+[settings]
+os_build=Windows
+arch_build=x86_64
+os=Windows
+arch=x86_64
+compiler=Visual Studio
+compiler.runtime=MD
+compiler.version=15
+#build_type=Release

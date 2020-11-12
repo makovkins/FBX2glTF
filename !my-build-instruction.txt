@@ -1,3 +1,4 @@
+Установить FBX SDK 2019.2 в директорию ./sdk/Windows/2019.2 (в ней должны быть include и lib)
 Установить cmake
 Установить conan
 conan remote add --force bincrafters https://api.bintray.com/conan/bincrafters/public-conan
