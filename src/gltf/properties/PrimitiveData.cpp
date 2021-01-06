@@ -13,66 +13,85 @@
 #include "MaterialData.hpp"
 
 PrimitiveData::PrimitiveData(
-    const AccessorData& indices,
-    const MaterialData& material,
-    std::shared_ptr<draco::Mesh> dracoMesh)
-    : indices(indices.ix),
-      material(material.ix),
-      mode(TRIANGLES),
-      dracoMesh(dracoMesh),
-      dracoBufferView(-1) {}
-
-PrimitiveData::PrimitiveData(const AccessorData& indices, const MaterialData& material)
-    : indices(indices.ix),
-      material(material.ix),
-      mode(TRIANGLES),
-      dracoMesh(nullptr),
-      dracoBufferView(-1) {}
-
-void PrimitiveData::AddAttrib(std::string name, const AccessorData& accessor) {
-  attributes[name] = accessor.ix;
+	const AccessorData& indices,
+	const MaterialData& material,
+	std::shared_ptr<draco::Mesh> dracoMesh)
+	: indices(indices.ix),
+	  material(material.ix),
+	  mode(TRIANGLES),
+	  dracoMesh(dracoMesh),
+	  dracoBufferView(-1)
+{
 }
 
-void PrimitiveData::NoteDracoBuffer(const BufferViewData& data) {
-  dracoBufferView = data.ix;
+PrimitiveData::PrimitiveData(const AccessorData& indices, const MaterialData& material)
+	: indices(indices.ix),
+	  material(material.ix),
+	  mode(TRIANGLES),
+	  dracoMesh(nullptr),
+	  dracoBufferView(-1)
+{
+}
+
+void PrimitiveData::AddAttrib(std::string name, const AccessorData& accessor)
+{
+	attributes[name] = accessor.ix;
+}
+
+void PrimitiveData::NoteDracoBuffer(const BufferViewData& data)
+{
+	dracoBufferView = data.ix;
 }
 
 void PrimitiveData::AddTarget(
-    const AccessorData* positions,
-    const AccessorData* normals,
-    const AccessorData* tangents) {
-  targetAccessors.push_back(std::make_tuple(
-      positions->ix,
-      normals != nullptr ? normals->ix : -1,
-      tangents != nullptr ? tangents->ix : -1));
+	const AccessorData* positions,
+	const AccessorData* normals,
+	const AccessorData* tangents)
+{
+	targetAccessors.push_back(std::make_tuple(
+		positions->ix,
+		normals != nullptr ? normals->ix : -1,
+		tangents != nullptr ? tangents->ix : -1));
 }
 
-void to_json(json& j, const PrimitiveData& d) {
-  j = {{"material", d.material}, {"mode", d.mode}, {"attributes", d.attributes}};
-  if (d.indices >= 0) {
-    j["indices"] = d.indices;
-  }
-  if (!d.targetAccessors.empty()) {
-    json targets{};
-    int pIx, nIx, tIx;
-    for (auto accessor : d.targetAccessors) {
-      std::tie(pIx, nIx, tIx) = accessor;
-      json target{};
-      if (pIx >= 0) {
-        target["POSITION"] = pIx;
-      }
-      if (nIx >= 0) {
-        target["NORMAL"] = nIx;
-      }
-      if (tIx >= 0) {
-        target["TANGENT"] = tIx;
-      }
-      targets.push_back(target);
-    }
-    j["targets"] = targets;
-  }
-  if (!d.dracoAttributes.empty()) {
-    j["extensions"] = {{KHR_DRACO_MESH_COMPRESSION,
-                        {{"bufferView", d.dracoBufferView}, {"attributes", d.dracoAttributes}}}};
-  }
+void to_json(json& j, const PrimitiveData& d)
+{
+	j = {{"material", d.material}, {"mode", d.mode}, {"attributes", d.attributes}};
+	if (d.indices >= 0)
+	{
+		j["indices"] = d.indices;
+	}
+	if (!d.targetAccessors.empty())
+	{
+		json targets{};
+		int pIx, nIx, tIx;
+		for (auto accessor : d.targetAccessors)
+		{
+			std::tie(pIx, nIx, tIx) = accessor;
+			json target{};
+			if (pIx >= 0)
+			{
+				target["POSITION"] = pIx;
+			}
+			if (nIx >= 0)
+			{
+				target["NORMAL"] = nIx;
+			}
+			if (tIx >= 0)
+			{
+				target["TANGENT"] = tIx;
+			}
+			targets.push_back(target);
+		}
+		j["targets"] = targets;
+	}
+	if (!d.dracoAttributes.empty())
+	{
+		j["extensions"] = {
+			{
+				KHR_DRACO_MESH_COMPRESSION,
+				{{"bufferView", d.dracoBufferView}, {"attributes", d.dracoAttributes}}
+			}
+		};
+	}
 }

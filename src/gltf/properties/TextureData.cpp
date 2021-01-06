@@ -12,8 +12,11 @@
 #include "SamplerData.hpp"
 
 TextureData::TextureData(std::string name, const SamplerData& sampler, const ImageData& source)
-    : Holdable(), name(std::move(name)), sampler(sampler.ix), source(source.ix) {}
+	: Holdable(), name(std::move(name)), sampler(sampler.ix), source(source.ix)
+{
+}
 
-json TextureData::serialize() const {
-  return {{"name", name}, {"sampler", sampler}, {"source", source}};
+json TextureData::serialize() const
+{
+	return {{"name", name}, {"sampler", sampler}, {"source", source}};
 }

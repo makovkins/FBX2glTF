@@ -117,7 +117,7 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::reso
 
 	// the normal map can only ever be a map, ignore everything else
 	tie(std::ignore, res->texNormal) = getSurfaceVector(FbxSurfaceMaterial::sNormalMap);
-	
+
 	// the bump map can only ever be a map, ignore everything else
 	tie(std::ignore, res->texBump) = getSurfaceVector(FbxSurfaceMaterial::sBump);
 	tie(res->bumpFactor, std::ignore) = getSurfaceScalar("BumpFactor");

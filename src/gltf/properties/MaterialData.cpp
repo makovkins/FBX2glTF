@@ -42,7 +42,7 @@ clamp(const Vec4f& vec, const Vec4f& bottom = VEC4F_ZERO, const Vec4f& top = VEC
 }
 
 MaterialData::MaterialData(
-	std::string name,	
+	std::string name,
 	RawShadingModel shadingModel,
 	bool isTransparent,
 	const TextureData* diffuseTexture,
@@ -51,29 +51,29 @@ MaterialData::MaterialData(
 	const TextureData* metallicTexture,
 	const float metallic,
 	const TextureData* roughnessTexture,
-	const float roughness,	
+	const float roughness,
 	const TextureData* occlusionTexture,
 	const TextureData* emissiveTexture,
 	const Vec3f& emissiveColor,
 	const TextureData* bumpTexture,
 	float bumpFactor,
 	const TextureData* opacityTexture) :
-		name(std::move(name)),
-		shadingModel(shadingModel),
-		isTransparent(isTransparent),
-		diffuseTexture(Tex::ref(diffuseTexture)),
-		diffuseColor(diffuseColor),
-		normalTexture(Tex::ref(normalTexture)),
-		metallicTexture(Tex::ref(metallicTexture)),
-		metallic(clamp(metallic)),
-		roughnessTexture(Tex::ref(roughnessTexture)),
-		roughness(clamp(roughness)),
-		occlusionTexture(Tex::ref(occlusionTexture)),
-		emissiveTexture(Tex::ref(emissiveTexture)),
-		emissiveColor(clamp(emissiveColor)),
-		bumpTexture(Tex::ref(bumpTexture)),
-		bumpFactor(bumpFactor),
-		opacityTexture(Tex::ref(opacityTexture))
+	name(std::move(name)),
+	shadingModel(shadingModel),
+	isTransparent(isTransparent),
+	diffuseTexture(Tex::ref(diffuseTexture)),
+	diffuseColor(diffuseColor),
+	normalTexture(Tex::ref(normalTexture)),
+	metallicTexture(Tex::ref(metallicTexture)),
+	metallic(clamp(metallic)),
+	roughnessTexture(Tex::ref(roughnessTexture)),
+	roughness(clamp(roughness)),
+	occlusionTexture(Tex::ref(occlusionTexture)),
+	emissiveTexture(Tex::ref(emissiveTexture)),
+	emissiveColor(clamp(emissiveColor)),
+	bumpTexture(Tex::ref(bumpTexture)),
+	bumpFactor(bumpFactor),
+	opacityTexture(Tex::ref(opacityTexture))
 {
 }
 
@@ -112,25 +112,25 @@ json MaterialData::serialize() const
 
 	if (diffuseTexture != nullptr)
 		result["diffuseTexture"] = *diffuseTexture;
-	
+
 	if (normalTexture != nullptr)
 		result["normalTexture"] = *normalTexture;
 
 	if (metallicTexture != nullptr)
 		result["metallicTexture"] = *metallicTexture;
 	if (metallic != 1.0f)
-		result["metallic"] = metallic;	
+		result["metallic"] = metallic;
 
 	if (roughnessTexture != nullptr)
 		result["roughnessTexture"] = *roughnessTexture;
 	if (roughness != 1.0f)
 		result["roughness"] = roughness;
-	
+
 	if (occlusionTexture != nullptr)
 		result["occlusionTexture"] = *occlusionTexture;
 
 	if (emissiveTexture != nullptr)
-		result["emissiveTexture"] = *emissiveTexture;	
+		result["emissiveTexture"] = *emissiveTexture;
 	result["emissiveColor"] = toStdVec(emissiveColor);
 
 	if (bumpTexture != nullptr)
