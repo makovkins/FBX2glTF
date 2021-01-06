@@ -19,15 +19,16 @@
 #define strncasecmp _strnicmp
 #endif
 
-namespace StringUtils {
+namespace StringUtils
+{
+	inline std::string ToLower(std::string s)
+	{
+		std::transform(s.begin(), s.end(), s.begin(), [](uint8_t c) { return std::tolower(c); });
+		return s;
+	}
 
-inline std::string ToLower(std::string s) {
-  std::transform(s.begin(), s.end(), s.begin(), [](uint8_t c) { return std::tolower(c); });
-  return s;
-}
-
-inline int CompareNoCase(const std::string& s1, const std::string& s2) {
-  return strncasecmp(s1.c_str(), s2.c_str(), std::max(s1.length(), s2.length()));
-}
-
+	inline int CompareNoCase(const std::string& s1, const std::string& s2)
+	{
+		return strncasecmp(s1.c_str(), s2.c_str(), std::max(s1.length(), s2.length()));
+	}
 } // namespace StringUtils

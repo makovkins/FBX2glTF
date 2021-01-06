@@ -254,8 +254,6 @@ ModelData* Raw2Gltf(
 			const bool isTransparent = material.type == RAW_MATERIAL_TYPE_TRANSPARENT ||
 				material.type == RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT;
 
-			Vec3f emissiveColor;
-
 			// acquire the texture of a specific RawTextureUsage as *TextData, or nullptr if none exists
 			auto simpleTex = [&](RawTextureUsage usage) -> std::shared_ptr<TextureData>
 			{
@@ -275,58 +273,95 @@ ModelData* Raw2Gltf(
 			if (!occlusionTexture)
 				occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_AMBIENT).get();
 
-			/**
-			 * Traditional FBX Material -> PBR Met/Rough glTF.
-			 *
-			 * Diffuse channel is used as base colour. Simple constants for metallic and roughness.
-			 */
-			const RawTraditionalMatProps* props = (RawTraditionalMatProps*)material.info.get();
-			Vec4f diffuseColor = props->diffuseFactor;
-
-			float metallic = metallicTexture ? 1.0f : props->specularLevel;
-			float bumpFactor = props->bumpFactor;
-
-			// fairly arbitrary conversion equation, with properties:
-			//   shininess [0..1] -> roughness 1
-			//   shininess 2      -> roughness ~0.9
-			//   shininess 64     -> roughness ~0.4
-			//   shininess 1024   -> roughness 0
-			auto getRoughness = [&](float shininess)
+			if (material.info->shadingModel == RAW_SHADING_MODEL_VRAY)
 			{
-				float rough = 1;
-				if (shininess > 1)
-					rough = 1.0f - log(shininess) / log(1024.0f);
-				rough = std::max(0.0f, std::min(1.0f, rough));
-				return rough;
-			};
+				const RawVRayMatProps* rawMtl = (RawVRayMatProps*)material.info.get();
 
-			// no shininess texture,
-			float roughness = roughnessTexture ? 1.0f : getRoughness(props->shininess);
+				Vec4f diffuseColor = Vec4f(rawMtl->diffuseColor.x, rawMtl->diffuseColor.y, rawMtl->diffuseColor.z, rawMtl->refractionColor.x);
+				float metallic = metallicTexture ? 1.0f : 1.0f; // TODO: !!!
+				float bumpFactor = rawMtl->bumpMultiplier;
+				float roughness = roughnessTexture ? 1.0f : 1.0f; // TODO: !!!!
 
-			emissiveColor = props->emissiveFactor;
+				Vec3f emissiveColor = rawMtl->selfIlluminationColor;
 
-			std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
-				material.name,
-				material.info->shadingModel,
-				isTransparent,
-				diffuseTexture,
-				diffuseColor,
-				normalTexture,
-				metallicTexture,
-				metallic,
-				roughnessTexture,
-				roughness,
-				occlusionTexture,
-				emissiveTexture,
-				emissiveColor,
-				bumpTexture,
-				bumpFactor,
-				opacityTexture));
+				std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
+					material.name,
+					material.info->shadingModel,
+					isTransparent,
+					diffuseTexture,
+					diffuseColor,
+					normalTexture,
+					metallicTexture,
+					metallic,
+					roughnessTexture,
+					roughness,
+					occlusionTexture,
+					emissiveTexture,
+					emissiveColor,
+					bumpTexture,
+					bumpFactor,
+					opacityTexture));
 
-			materialsById[material.id] = mData;
+				materialsById[material.id] = mData;
 
-			if (options.enableUserProperties)
-				mData->userProperties = material.userProperties;
+				if (options.enableUserProperties)
+					mData->userProperties = material.userProperties;
+			}
+			else
+			{
+				/**
+				 * Traditional FBX Material -> PBR Met/Rough glTF.
+				 *
+				 * Diffuse channel is used as base colour. Simple constants for metallic and roughness.
+				 */
+				const RawTraditionalMatProps* rawMtl = (RawTraditionalMatProps*)material.info.get();
+				Vec4f diffuseColor = rawMtl->diffuseFactor;
+
+				float metallic = metallicTexture ? 1.0f : rawMtl->specularLevel;
+				float bumpFactor = rawMtl->bumpFactor;
+
+				// fairly arbitrary conversion equation, with properties:
+				//   shininess [0..1] -> roughness 1
+				//   shininess 2      -> roughness ~0.9
+				//   shininess 64     -> roughness ~0.4
+				//   shininess 1024   -> roughness 0
+				auto getRoughness = [&](float shininess)
+				{
+					float rough = 1;
+					if (shininess > 1)
+						rough = 1.0f - log(shininess) / log(1024.0f);
+					rough = std::max(0.0f, std::min(1.0f, rough));
+					return rough;
+				};
+
+				// no shininess texture,
+				float roughness = roughnessTexture ? 1.0f : getRoughness(rawMtl->shininess);
+
+				Vec3f emissiveColor = rawMtl->emissiveFactor;
+
+				std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
+					material.name,
+					material.info->shadingModel,
+					isTransparent,
+					diffuseTexture,
+					diffuseColor,
+					normalTexture,
+					metallicTexture,
+					metallic,
+					roughnessTexture,
+					roughness,
+					occlusionTexture,
+					emissiveTexture,
+					emissiveColor,
+					bumpTexture,
+					bumpFactor,
+					opacityTexture));
+
+				materialsById[material.id] = mData;
+
+				if (options.enableUserProperties)
+					mData->userProperties = material.userProperties;
+			}
 		}
 
 		for (const auto& surfaceModel : materialModels)
@@ -335,8 +370,7 @@ ModelData* Raw2Gltf(
 			const RawSurface& rawSurface = surfaceModel.GetSurface(0);
 			const uint64_t surfaceId = rawSurface.id;
 
-			const RawMaterial& rawMaterial =
-				surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
+			const RawMaterial& rawMaterial = surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
 			const MaterialData& mData = require(materialsById, rawMaterial.id);
 
 			MeshData* mesh = nullptr;

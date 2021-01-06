@@ -9,69 +9,77 @@
 #pragma once
 
 #include <functional>
-
 #include "FBX2glTF.h"
-
-#include <gltf/properties/ImageData.hpp>
-
 #include "GltfModel.hpp"
 
-class TextureBuilder {
- public:
-  using pixel = std::array<float, 4>; // pixel components are floats in [0, 1]
-  using pixel_merger = std::function<pixel(const std::vector<const pixel*>)>;
+class TextureBuilder
+{
+public:
+	using pixel = std::array<float, 4>; // pixel components are floats in [0, 1]
+	using pixel_merger = std::function<pixel(const std::vector<const pixel*>)>;
 
-  TextureBuilder(
-      const RawModel& raw,
-      const GltfOptions& options,
-      const std::string& outputFolder,
-      GltfModel& gltf)
-      : raw(raw), options(options), outputFolder(outputFolder), gltf(gltf) {}
-  ~TextureBuilder() {}
+	TextureBuilder(
+		const RawModel& raw,
+		const GltfOptions& options,
+		const std::string& outputFolder,
+		GltfModel& gltf) :
+		raw(raw), options(options), outputFolder(outputFolder), gltf(gltf)
+	{
+	}
 
-  std::shared_ptr<TextureData> combine(
-      const std::vector<int>& ixVec,
-      const std::string& tag,
-      const pixel_merger& mergeFunction,
-      bool transparency);
+	~TextureBuilder()
+	{
+	}
 
-  std::shared_ptr<TextureData> simple(int rawTexIndex, const std::string& tag);
+	std::shared_ptr<TextureData> combine(
+		const std::vector<int>& ixVec,
+		const std::string& tag,
+		const pixel_merger& mergeFunction,
+		bool transparency);
 
-  static std::string texIndicesKey(const std::vector<int>& ixVec, const std::string& tag) {
-    std::string result = tag;
-    for (int ix : ixVec) {
-      result += "_" + std::to_string(ix);
-    }
-    return result;
-  };
+	std::shared_ptr<TextureData> simple(int rawTexIndex, const std::string& tag);
 
-  static std::string describeChannel(int channels) {
-    switch (channels) {
-      case 1:
-        return "G";
-      case 2:
-        return "GA";
-      case 3:
-        return "RGB";
-      case 4:
-        return "RGBA";
-      default:
-        return fmt::format("?%d?", channels);
-    }
-  };
+	static std::string texIndicesKey(const std::vector<int>& ixVec, const std::string& tag)
+	{
+		std::string result = tag;
+		for (int ix : ixVec)
+		{
+			result += "_" + std::to_string(ix);
+		}
+		return result;
+	};
 
-  static void WriteToVectorContext(void* context, void* data, int size) {
-    auto* vec = static_cast<std::vector<uint8_t>*>(context);
-    for (int ii = 0; ii < size; ii++) {
-      vec->push_back(((uint8_t*)data)[ii]);
-    }
-  }
+	static std::string describeChannel(int channels)
+	{
+		switch (channels)
+		{
+		case 1:
+			return "G";
+		case 2:
+			return "GA";
+		case 3:
+			return "RGB";
+		case 4:
+			return "RGBA";
+		default:
+			return fmt::format("?%d?", channels);
+		}
+	};
 
- private:
-  const RawModel& raw;
-  const GltfOptions& options;
-  const std::string outputFolder;
-  GltfModel& gltf;
+	static void WriteToVectorContext(void* context, void* data, int size)
+	{
+		auto* vec = static_cast<std::vector<uint8_t>*>(context);
+		for (int ii = 0; ii < size; ii++)
+		{
+			vec->push_back(((uint8_t*)data)[ii]);
+		}
+	}
 
-  std::map<std::string, std::shared_ptr<TextureData>> textureByIndicesKey;
+private:
+	const RawModel& raw;
+	const GltfOptions& options;
+	const std::string outputFolder;
+	GltfModel& gltf;
+
+	std::map<std::string, std::shared_ptr<TextureData>> textureByIndicesKey;
 };

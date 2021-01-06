@@ -8,7 +8,7 @@
 
 #include "TraditionalMaterials.hpp"
 
-std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::resolve() const
+std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::Resolve() const
 {
 	auto getSurfaceScalar = [&](const char* propName) -> std::tuple<FbxDouble, FbxFileTexture*>
 	{

@@ -103,6 +103,7 @@ enum RawShadingModel
 	RAW_SHADING_MODEL_BLINN,
 	RAW_SHADING_MODEL_PHONG,
 	RAW_SHADING_MODEL_PBR_MET_ROUGH,
+	RAW_SHADING_MODEL_VRAY,
 	RAW_SHADING_MODEL_MAX
 };
 
@@ -122,6 +123,8 @@ inline std::string Describe(RawShadingModel model)
 		return "Phong";
 	case RAW_SHADING_MODEL_PBR_MET_ROUGH:
 		return "Metallic/Roughness";
+	case RAW_SHADING_MODEL_VRAY:
+		return "VRay";
 	case RAW_SHADING_MODEL_MAX:
 	default:
 		return "<unknown>";
@@ -262,7 +265,54 @@ struct RawTraditionalMatProps : RawMatProps
 			return ambientFactor == typed.ambientFactor && diffuseFactor == typed.diffuseFactor &&
 				specularFactor == typed.specularFactor && emissiveFactor == typed.emissiveFactor &&
 				specularLevel == typed.specularLevel && shininess == typed.shininess &&
-				bumpFactor == typed.bumpFactor && bumpFactor == typed.bumpFactor;
+				bumpFactor == typed.bumpFactor;
+		}
+		return false;
+	}
+};
+
+struct RawVRayMatProps : RawMatProps
+{
+	RawVRayMatProps(
+		RawShadingModel shadingModel,
+		const Vec3f&& diffuseColor,
+		const Vec3f&& reflectionColor,
+		const float roughness,
+		const Vec3f&& refractionColor,
+		const Vec3f&& selfIlluminationColor,
+		const float selfIlluminationMultiplier,
+		float bumpMultiplier)
+		: RawMatProps(shadingModel),
+		diffuseColor(diffuseColor),
+		reflectionColor(reflectionColor),
+		roughness(roughness),
+		refractionColor(refractionColor),
+		selfIlluminationColor(selfIlluminationColor),
+		selfIlluminationMultiplier(selfIlluminationMultiplier),
+		bumpMultiplier(bumpMultiplier)
+	{
+	}
+
+	const Vec3f diffuseColor;
+	const Vec3f reflectionColor;
+	const float roughness;
+	const Vec3f refractionColor;
+	const Vec3f selfIlluminationColor;
+	const float selfIlluminationMultiplier;
+	const float bumpMultiplier;
+
+	bool operator==(const RawMatProps& other) const override
+	{
+		if (RawMatProps::operator==(other))
+		{
+			const auto& typed = (RawVRayMatProps&)other;
+			return diffuseColor == typed.diffuseColor &&
+				reflectionColor == typed.reflectionColor  &&
+				roughness == typed.roughness &&
+				refractionColor == typed.refractionColor &&
+				selfIlluminationColor == typed.selfIlluminationColor &&
+				selfIlluminationMultiplier == typed.selfIlluminationMultiplier &&
+				bumpMultiplier == typed.bumpMultiplier;
 		}
 		return false;
 	}

@@ -115,11 +115,10 @@ endif()
 
 set(LIB_SOURCE_FILES
         src/FBX2glTF.h
-        src/fbx/materials/3dsMaxPhysicalMaterial.cpp
         src/fbx/materials/FbxMaterials.cpp
         src/fbx/materials/FbxMaterials.hpp
-        src/fbx/materials/RoughnessMetallicMaterials.hpp
-        src/fbx/materials/StingrayPBSMaterial.cpp
+        src/fbx/materials/VRayMaterial.cpp
+        src/fbx/materials/VRayMaterial.hpp
         src/fbx/materials/TraditionalMaterials.cpp
         src/fbx/materials/TraditionalMaterials.hpp
         src/fbx/Fbx2Raw.cpp
@@ -197,6 +196,10 @@ if (NOT MSVC)
     "-Wno-null-dereference"
     "-Wunused"
     )
+endif()
+
+if(MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 target_link_libraries(libFBX2glTF

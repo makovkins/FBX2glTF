@@ -29,8 +29,8 @@
 #include "FbxBlendShapesAccess.hpp"
 #include "FbxLayerElementAccess.hpp"
 #include "FbxSkinningAccess.hpp"
-#include "materials/RoughnessMetallicMaterials.hpp"
 #include "materials/TraditionalMaterials.hpp"
+#include "materials/VRayMaterial.hpp"
 
 float scaleFactor;
 
@@ -193,8 +193,8 @@ static void ReadMesh(
 	Mat4f scaleMatrix = Mat4f::FromScaleVector(Vec3f(scaleFactor, scaleFactor, scaleFactor));
 	Mat4f invScaleMatrix = scaleMatrix.Inverse();
 
-	rawSurface.skeletonRootId =
-		(skinning.IsSkinned()) ? skinning.GetRootNode() : pNode->GetUniqueID();
+	rawSurface.skeletonRootId = skinning.IsSkinned() ? skinning.GetRootNode() : pNode->GetUniqueID();
+
 	for (int jointIndex = 0; jointIndex < skinning.GetNodeCount(); jointIndex++)
 	{
 		const uint64_t jointId = skinning.GetJointId(jointIndex);
@@ -271,59 +271,51 @@ static void ReadMesh(
 				{
 					// dig out the inferred filename from the textureLocations map
 					FbxString inferredPath = textureLocations.find(tex)->second;
-					textures[usage] =
-						raw.AddTexture(tex->GetName(), tex->GetFileName(), inferredPath.Buffer(), usage);
+					textures[usage] = raw.AddTexture(tex->GetName(), tex->GetFileName(), inferredPath.Buffer(), usage);
 				}
 			};
 
 			std::shared_ptr<RawMatProps> matInfo;
-			if (fbxMaterial->shadingModel == FbxRoughMetMaterialInfo::FBX_SHADER_METROUGH)
-			{
-				FbxRoughMetMaterialInfo* fbxMatInfo =
-					static_cast<FbxRoughMetMaterialInfo*>(fbxMaterial.get());
 
-				maybeAddTexture(fbxMatInfo->texBaseColor, RAW_TEXTURE_USAGE_ALBEDO);
-				maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
-				maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
-				maybeAddTexture(fbxMatInfo->texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
-				maybeAddTexture(fbxMatInfo->texMetallic, RAW_TEXTURE_USAGE_METALLIC);
-				maybeAddTexture(fbxMatInfo->texAmbientOcclusion, RAW_TEXTURE_USAGE_OCCLUSION);
+			if (fbxMaterial->shadingModel == FbxVRayMaterialInfo::FBX_SHADER_VRAY)
+			{
+				FbxVRayMaterialInfo* fbxMatInfo = static_cast<FbxVRayMaterialInfo*>(fbxMaterial.get());
+
+				maybeAddTexture(fbxMatInfo->diffuseTexture, RAW_TEXTURE_USAGE_DIFFUSE);
+				maybeAddTexture(fbxMatInfo->bumpTexture, fbxMatInfo->useBumpAsNormal ? RAW_TEXTURE_USAGE_NORMAL : RAW_TEXTURE_USAGE_BUMP);
+				maybeAddTexture(fbxMatInfo->selfIlluminationTexture, RAW_TEXTURE_USAGE_EMISSIVE);
+				maybeAddTexture(fbxMatInfo->roughnessTexture, RAW_TEXTURE_USAGE_ROUGHNESS);
+				maybeAddTexture(fbxMatInfo->metalnessTexture, RAW_TEXTURE_USAGE_METALLIC);
+				maybeAddTexture(fbxMatInfo->opacityTexture, RAW_TEXTURE_USAGE_OPACITY);
+
 				rawMatProps.reset(
-					new RawMetRoughMatProps(
-						RAW_SHADING_MODEL_PBR_MET_ROUGH,
-						toVec4f(fbxMatInfo->baseColor),
-						toVec3f(fbxMatInfo->emissive),
-						(float)fbxMatInfo->emissiveIntensity,
-						(float)fbxMatInfo->metallic,
+					new RawVRayMatProps(
+						RAW_SHADING_MODEL_VRAY,
+						toVec3f(fbxMatInfo->diffuseColor),
+						toVec3f(fbxMatInfo->reflectionColor),
 						(float)fbxMatInfo->roughness,
-						fbxMatInfo->invertRoughnessMap));
-				materialOpacity = (float)fbxMatInfo->baseColor[3];
+						toVec3f(fbxMatInfo->refractionColor),
+						toVec3f(fbxMatInfo->selfIlluminationColor),
+						(float)fbxMatInfo->selfIlluminationMultiplier,
+						(float)fbxMatInfo->bumpMultiplier));
+
+				materialOpacity = (float)fbxMatInfo->refractionColor[3];
 			}
 			else
 			{
-				FbxTraditionalMaterialInfo* fbxMatInfo =
-					static_cast<FbxTraditionalMaterialInfo*>(fbxMaterial.get());
+				FbxTraditionalMaterialInfo* fbxMatInfo = static_cast<FbxTraditionalMaterialInfo*>(fbxMaterial.get());
 				RawShadingModel shadingModel;
 				if (fbxMaterial->shadingModel == "Lambert")
-				{
 					shadingModel = RAW_SHADING_MODEL_LAMBERT;
-				}
-				else if (0 == fbxMaterial->shadingModel.CompareNoCase("Blinn"))
-				{
+				else if (!fbxMaterial->shadingModel.CompareNoCase("Blinn"))
 					shadingModel = RAW_SHADING_MODEL_BLINN;
-				}
-				else if (0 == fbxMaterial->shadingModel.CompareNoCase("Phong"))
-				{
+				else if (!fbxMaterial->shadingModel.CompareNoCase("Phong"))
 					shadingModel = RAW_SHADING_MODEL_PHONG;
-				}
-				else if (0 == fbxMaterial->shadingModel.CompareNoCase("Constant"))
-				{
+				else if (!fbxMaterial->shadingModel.CompareNoCase("Constant"))
 					shadingModel = RAW_SHADING_MODEL_PHONG;
-				}
 				else
-				{
 					shadingModel = RAW_SHADING_MODEL_UNKNOWN;
-				}
+
 				maybeAddTexture(fbxMatInfo->texDiffuse, RAW_TEXTURE_USAGE_DIFFUSE);
 				maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
 				maybeAddTexture(fbxMatInfo->texBump, RAW_TEXTURE_USAGE_BUMP);
@@ -421,8 +413,7 @@ static void ReadMesh(
 			vertex.jointWeights = skinning.GetVertexWeights(controlPointIndex);
 			vertex.polarityUv0 = false;
 
-			// flag this triangle as transparent if any of its corner vertices substantially deviates from
-			// fully opaque
+			// Flag this triangle as transparent if any of its corner vertices substantially deviates from fully opaque.
 			vertexTransparency |= colorLayer.LayerPresent() && (fabs(fbxColor.mAlpha - 1.0) > 1e-3);
 
 			rawSurface.bounds.AddPoint(vertex.position);
@@ -433,10 +424,10 @@ static void ReadMesh(
 				for (const auto* targetShape : targetShapes)
 				{
 					RawBlendVertex blendVertex;
-					// the morph target data must be transformed just as with the vertex positions above
-					const FbxVector4& shapePosition =
-						transform.MultNormalize(targetShape->positions[controlPointIndex]);
+					// The morph target data must be transformed just as with the vertex positions above.
+					const FbxVector4& shapePosition = transform.MultNormalize(targetShape->positions[controlPointIndex]);
 					blendVertex.position = toVec3f(shapePosition - fbxPosition) * scaleFactor;
+
 					if (targetShape->normals.LayerPresent())
 					{
 						const FbxVector4& normal = targetShape->normals.GetElement(
@@ -448,6 +439,7 @@ static void ReadMesh(
 							true);
 						blendVertex.normal = toVec3f(normal - fbxNormal);
 					}
+
 					if (targetShape->tangents.LayerPresent())
 					{
 						const FbxVector4& tangent = targetShape->tangents.GetElement(
@@ -459,6 +451,7 @@ static void ReadMesh(
 							true);
 						blendVertex.tangent = toVec4f(tangent - fbxTangent);
 					}
+
 					vertex.blends.push_back(blendVertex);
 				}
 			}
@@ -475,12 +468,14 @@ static void ReadMesh(
 					vertex.jointIndices[2],
 					vertex.jointIndices[3]
 				};
+
 				const float jointWeights[FbxSkinningAccess::MAX_WEIGHTS] = {
 					vertex.jointWeights[0],
 					vertex.jointWeights[1],
 					vertex.jointWeights[2],
 					vertex.jointWeights[3]
 				};
+
 				const FbxMatrix skinningMatrix =
 					skinning.GetJointSkinningTransform(jointIndices[0]) * jointWeights[0] +
 					skinning.GetJointSkinningTransform(jointIndices[1]) * jointWeights[1] +
@@ -488,13 +483,13 @@ static void ReadMesh(
 					skinning.GetJointSkinningTransform(jointIndices[3]) * jointWeights[3];
 
 				const FbxVector4 globalPosition = skinningMatrix.MultNormalize(fbxPosition);
+
 				for (int i = 0; i < FbxSkinningAccess::MAX_WEIGHTS; i++)
 				{
 					if (jointWeights[i] > 0.0f)
 					{
 						const FbxVector4 localPosition =
-							skinning.GetJointInverseGlobalTransforms(jointIndices[i])
-							        .MultNormalize(globalPosition);
+							skinning.GetJointInverseGlobalTransforms(jointIndices[i]).MultNormalize(globalPosition);
 
 						Vec3f& mins = rawSurface.jointGeometryMins[jointIndices[i]];
 						mins[0] = std::min(mins[0], (float)localPosition[0]);
@@ -514,8 +509,7 @@ static void ReadMesh(
 		{
 			// Distinguish vertices that are used by triangles with a different texture polarity to avoid
 			// degenerate tangent space smoothing.
-			const bool polarity =
-				TriangleTexturePolarity(rawVertices[0].uv0, rawVertices[1].uv0, rawVertices[2].uv0);
+			const bool polarity = TriangleTexturePolarity(rawVertices[0].uv0, rawVertices[1].uv0, rawVertices[2].uv0);
 			rawVertices[0].polarityUv0 = polarity;
 			rawVertices[1].polarityUv0 = polarity;
 			rawVertices[2].polarityUv0 = polarity;
@@ -523,12 +517,9 @@ static void ReadMesh(
 
 		int rawVertexIndices[3];
 		for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
-		{
 			rawVertexIndices[vertexIndex] = raw.AddVertex(rawVertices[vertexIndex]);
-		}
 
-		const RawMaterialType materialType =
-			GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
+		const RawMaterialType materialType = GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
 		const int rawMaterialIndex = raw.AddMaterial(
 			materialId,
 			materialName,
@@ -550,7 +541,7 @@ static void ReadMesh(
 double HFOV2VFOV(double h, double ar)
 {
 	return 2.0 * std::atan((ar) * std::tan((h * FBXSDK_PI_DIV_180) * 0.5)) * FBXSDK_180_DIV_PI;
-};
+}
 
 // ar : aspectX / aspectY
 double VFOV2HFOV(double v, double ar)

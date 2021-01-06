@@ -49,5 +49,5 @@ public:
 	{
 	}
 
-	virtual std::unique_ptr<FbxTraditionalMaterialInfo> resolve() const;
+	virtual std::unique_ptr<FbxTraditionalMaterialInfo> Resolve() const;
 };

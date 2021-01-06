@@ -37,7 +37,9 @@ public:
 	{
 	}
 
-	virtual std::unique_ptr<T> resolve() const = 0;
+	virtual ~FbxMaterialResolver() = default;
+
+	virtual std::unique_ptr<T> Resolve() const = 0;
 
 protected:
 	const FbxSurfaceMaterial* fbxMaterial;
@@ -55,7 +57,7 @@ public:
 
 	const std::vector<std::string> GetUserProperties(const int polygonIndex) const;
 
-	std::unique_ptr<FbxMaterialInfo> GetMaterialInfo(
+	static std::unique_ptr<FbxMaterialInfo> GetMaterialInfo(
 		FbxSurfaceMaterial* material,
 		const std::map<const FbxTexture*, FbxString>& textureLocations);
 
