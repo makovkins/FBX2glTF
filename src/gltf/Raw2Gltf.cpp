@@ -59,7 +59,7 @@ T& require(std::map<std::string, std::shared_ptr<T>> map, const std::string& key
 }
 
 template <typename T>
-T& require(std::map<long, std::shared_ptr<T>> map, long key)
+T& require(std::map<uint64_t, std::shared_ptr<T>> map, uint64_t key)
 {
 	auto iter = map.find(key);
 	assert(iter != map.end());
@@ -125,10 +125,10 @@ ModelData* Raw2Gltf(
 
 	std::unique_ptr<GltfModel> gltf(new GltfModel(options));
 
-	std::map<long, std::shared_ptr<NodeData>> nodesById;
-	std::map<long, std::shared_ptr<MaterialData>> materialsById;
+	std::map<uint64_t, std::shared_ptr<NodeData>> nodesById;
+	std::map<uint64_t, std::shared_ptr<MaterialData>> materialsById;
 	std::map<std::string, std::shared_ptr<TextureData>> textureByIndicesKey;
-	std::map<long, std::shared_ptr<MeshData>> meshBySurfaceId;
+	std::map<uint64_t, std::shared_ptr<MeshData>> meshBySurfaceId;
 
 	// for now, we only have one buffer; data->binary points to the same vector as that BufferData
 	// does.
@@ -265,7 +265,7 @@ ModelData* Raw2Gltf(
 			};
 
 			TextureData* diffuseTexture = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE).get();
-			TextureData* normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();			
+			TextureData* normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
 			TextureData* bumpTexture = simpleTex(RAW_TEXTURE_USAGE_BUMP).get();
 			TextureData* roughnessTexture = simpleTex(RAW_TEXTURE_USAGE_SHININESS).get();
 			TextureData* metallicTexture = simpleTex(RAW_TEXTURE_USAGE_SPECULAR).get();
@@ -274,7 +274,7 @@ ModelData* Raw2Gltf(
 			TextureData* occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
 			if (!occlusionTexture)
 				occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_AMBIENT).get();
-		
+
 			/**
 			 * Traditional FBX Material -> PBR Met/Rough glTF.
 			 *
@@ -308,21 +308,21 @@ ModelData* Raw2Gltf(
 			std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
 				material.name,
 				material.info->shadingModel,
-				isTransparent,				
+				isTransparent,
 				diffuseTexture,
 				diffuseColor,
 				normalTexture,
 				metallicTexture,
 				metallic,
 				roughnessTexture,
-				roughness,				
+				roughness,
 				occlusionTexture,
 				emissiveTexture,
 				emissiveColor,
 				bumpTexture,
 				bumpFactor,
 				opacityTexture));
-			
+
 			materialsById[material.id] = mData;
 
 			if (options.enableUserProperties)
@@ -333,7 +333,7 @@ ModelData* Raw2Gltf(
 		{
 			assert(surfaceModel.GetSurfaceCount() == 1);
 			const RawSurface& rawSurface = surfaceModel.GetSurface(0);
-			const long surfaceId = rawSurface.id;
+			const uint64_t surfaceId = rawSurface.id;
 
 			const RawMaterial& rawMaterial =
 				surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);

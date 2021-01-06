@@ -310,7 +310,7 @@ struct RawMetRoughMatProps : RawMatProps
 
 struct RawMaterial
 {
-	long id;
+	uint64_t id;
 	std::string name;
 	RawMaterialType type;
 	std::shared_ptr<RawMatProps> info;
@@ -345,11 +345,11 @@ struct RawBlendChannel
 
 struct RawSurface
 {
-	long id;
+	uint64_t id;
 	std::string name; // The name of this surface
-	long skeletonRootId; // The id of the root node of the skeleton.
+	uint64_t skeletonRootId; // The id of the root node of the skeleton.
 	Bounds<float, 3> bounds;
-	std::vector<long> jointIds;
+	std::vector<uint64_t> jointIds;
 	std::vector<Vec3f> jointGeometryMins;
 	std::vector<Vec3f> jointGeometryMaxs;
 	std::vector<Mat4f> inverseBindMatrices;
@@ -376,7 +376,7 @@ struct RawAnimation
 struct RawCamera
 {
 	std::string name;
-	long nodeId;
+	uint64_t nodeId;
 
 	enum { CAMERA_MODE_PERSPECTIVE, CAMERA_MODE_ORTHOGRAPHIC } mode;
 
@@ -401,15 +401,15 @@ struct RawCamera
 struct RawNode
 {
 	bool isJoint;
-	long id;
+	uint64_t id;
 	std::string name;
-	long parentId;
-	std::vector<long> childIds;
+	uint64_t parentId;
+	std::vector<uint64_t> childIds;
 	Vec3f translation;
 	Quatf rotation;
 	Vec3f scale;
-	long surfaceId;
-	long lightIx;
+	uint64_t surfaceId;
+	int lightIx;
 	std::vector<std::string> userProperties;
 };
 
@@ -434,7 +434,7 @@ public:
 		RawTextureUsage usage);
 	int AddMaterial(const RawMaterial& material);
 	int AddMaterial(
-		const long id,
+		const uint64_t id,
 		const char* name,
 		const RawMaterialType materialType,
 		const int textures[RAW_TEXTURE_USAGE_MAX],
@@ -448,11 +448,11 @@ public:
 		float innerConeAngle,
 		float outerConeAngle);
 	int AddSurface(const RawSurface& suface);
-	int AddSurface(const char* name, long surfaceId);
+	int AddSurface(const char* name, uint64_t surfaceId);
 	int AddAnimation(const RawAnimation& animation);
 	int AddCameraPerspective(
 		const char* name,
-		const long nodeId,
+		const uint64_t nodeId,
 		const float aspectRatio,
 		const float fovDegreesX,
 		const float fovDegreesY,
@@ -460,20 +460,20 @@ public:
 		const float farZ);
 	int AddCameraOrthographic(
 		const char* name,
-		const long nodeId,
+		const uint64_t nodeId,
 		const float magX,
 		const float magY,
 		const float nearZ,
 		const float farZ);
 	int AddNode(const RawNode& node);
-	int AddNode(const long id, const char* name, const long parentId);
+	int AddNode(const uint64_t id, const char* name, const uint64_t parentId);
 
-	void SetRootNode(const long nodeId)
+	void SetRootNode(const uint64_t nodeId)
 	{
 		rootNodeId = nodeId;
 	}
 
-	const long GetRootNode() const
+	const uint64_t GetRootNode() const
 	{
 		return rootNodeId;
 	}
@@ -554,7 +554,7 @@ public:
 		return surfaces[index];
 	}
 
-	int GetSurfaceById(const long id) const;
+	int GetSurfaceById(uint64_t id) const;
 
 	// Iterate over the animations.
 	int GetAnimationCount() const
@@ -605,7 +605,7 @@ public:
 		return nodes[index];
 	}
 
-	int GetNodeById(const long nodeId) const;
+	int GetNodeById(uint64_t nodeId) const;
 
 	// Create individual attribute arrays.
 	// Returns true if the vertices store the particular attribute.
@@ -619,13 +619,13 @@ public:
 	void CreateMaterialModels(
 		std::vector<RawModel>& materialModels,
 		bool shortIndices,
-		const int keepAttribs,
-		const bool forceDiscrete) const;
+		int keepAttribs,
+		bool forceDiscrete) const;
 
 private:
 	Vec3f getFaceNormal(int verts[3]) const;
 
-	long rootNodeId;
+	uint64_t rootNodeId;
 	int vertexAttributes;
 	std::unordered_map<RawVertex, int, VertexHasher> vertexHash;
 	std::vector<RawVertex> vertices;

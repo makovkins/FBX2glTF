@@ -57,7 +57,7 @@ static RawMaterialType GetMaterialType(
 	int opacityTexture = textures[RAW_TEXTURE_USAGE_OPACITY];
 	if (opacityTexture >= 0)
 		return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
-	
+
 	// determine material type based on texture occlusion.
 	if (diffuseTexture >= 0)
 	{
@@ -87,7 +87,7 @@ static void ReadMesh(
 	FbxMesh* pMesh = pNode->GetMesh();
 
 	// Obtains the surface Id
-	const long surfaceId = pMesh->GetUniqueID();
+	const uint64_t surfaceId = pMesh->GetUniqueID();
 
 	// Associate the node to this surface
 	int nodeId = raw.GetNodeById(pNode->GetUniqueID());
@@ -197,7 +197,7 @@ static void ReadMesh(
 		(skinning.IsSkinned()) ? skinning.GetRootNode() : pNode->GetUniqueID();
 	for (int jointIndex = 0; jointIndex < skinning.GetNodeCount(); jointIndex++)
 	{
-		const long jointId = skinning.GetJointId(jointIndex);
+		const uint64_t jointId = skinning.GetJointId(jointIndex);
 		raw.GetNode(raw.GetNodeById(jointId)).isJoint = true;
 
 		rawSurface.jointIds.emplace_back(jointId);
@@ -243,7 +243,7 @@ static void ReadMesh(
 
 		std::shared_ptr<RawMatProps> rawMatProps;
 		FbxString materialName;
-		long materialId;
+		uint64_t materialId;
 
 		if (fbxMaterial == nullptr)
 		{
@@ -293,11 +293,11 @@ static void ReadMesh(
 						RAW_SHADING_MODEL_PBR_MET_ROUGH,
 						toVec4f(fbxMatInfo->baseColor),
 						toVec3f(fbxMatInfo->emissive),
-						fbxMatInfo->emissiveIntensity,
-						fbxMatInfo->metallic,
-						fbxMatInfo->roughness,
+						(float)fbxMatInfo->emissiveIntensity,
+						(float)fbxMatInfo->metallic,
+						(float)fbxMatInfo->roughness,
 						fbxMatInfo->invertRoughnessMap));
-				materialOpacity = fbxMatInfo->baseColor[3];
+				materialOpacity = (float)fbxMatInfo->baseColor[3];
 			}
 			else
 			{
@@ -339,10 +339,10 @@ static void ReadMesh(
 						toVec4f(fbxMatInfo->colDiffuse),
 						toVec3f(fbxMatInfo->colEmissive),
 						toVec3f(fbxMatInfo->colSpecular),
-						fbxMatInfo->specularFactor,
-						fbxMatInfo->shininess,
-						fbxMatInfo->bumpFactor));
-				materialOpacity = fbxMatInfo->colDiffuse[3];
+						(float)fbxMatInfo->specularFactor,
+						(float)fbxMatInfo->shininess,
+						(float)fbxMatInfo->bumpFactor));
+				materialOpacity = (float)fbxMatInfo->colDiffuse[3];
 			}
 		}
 
@@ -584,8 +584,8 @@ static void ReadLight(RawModel& raw, FbxScene* pScene, FbxNode* pNode)
 				RAW_LIGHT_TYPE_SPOT,
 				color,
 				intensity,
-				(float)pLight->InnerAngle.Get() * M_PI / 180,
-				(float)pLight->OuterAngle.Get() * M_PI / 180);
+				(float)(pLight->InnerAngle.Get() * M_PI / 180),
+				(float)(pLight->OuterAngle.Get() * M_PI / 180));
 			break;
 		}
 	default:
@@ -785,7 +785,7 @@ static void ReadNodeHierarchy(
 	RawModel& raw,
 	FbxScene* pScene,
 	FbxNode* pNode,
-	const long parentId,
+	const uint64_t parentId,
 	const std::string& path)
 {
 	const FbxUInt64 nodeId = pNode->GetUniqueID();
@@ -885,7 +885,7 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
 	const double epsilon = 1e-5f;
 
 	const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
-	for (size_t animIx = 0; animIx < animationCount; animIx++)
+	for (int animIx = 0; animIx < animationCount; animIx++)
 	{
 		FbxAnimStack* pAnimStack = pScene->GetSrcObject<FbxAnimStack>(animIx);
 		FbxString animStackName = pAnimStack->GetName();
@@ -1413,12 +1413,12 @@ json TranscribeProperty(FbxProperty& prop)
 	case eFbxUInt:
 	case eFbxLongLong:
 		{
-			p["value"] = prop.EvaluateValue<long long>(FBXSDK_TIME_INFINITE);
+			p["value"] = prop.EvaluateValue<int>(FBXSDK_TIME_INFINITE);
 			break;
 		}
 	case eFbxULongLong:
 		{
-			p["value"] = prop.EvaluateValue<unsigned long long>(FBXSDK_TIME_INFINITE);
+			p["value"] = prop.EvaluateValue<unsigned int>(FBXSDK_TIME_INFINITE);
 			break;
 		}
 	case eFbxFloat:

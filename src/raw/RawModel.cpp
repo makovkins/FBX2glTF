@@ -159,7 +159,7 @@ int RawModel::AddMaterial(const RawMaterial& material)
 }
 
 int RawModel::AddMaterial(
-	const long id,
+	const uint64_t id,
 	const char* name,
 	const RawMaterialType materialType,
 	const int textures[RAW_TEXTURE_USAGE_MAX],
@@ -270,7 +270,7 @@ int RawModel::AddSurface(const RawSurface& surface)
 	return (int)(surfaces.size() - 1);
 }
 
-int RawModel::AddSurface(const char* name, const long surfaceId)
+int RawModel::AddSurface(const char* name, const uint64_t surfaceId)
 {
 	assert(name[0] != '\0');
 
@@ -313,7 +313,7 @@ int RawModel::AddNode(const RawNode& node)
 
 int RawModel::AddCameraPerspective(
 	const char* name,
-	const long nodeId,
+	const uint64_t nodeId,
 	const float aspectRatio,
 	const float fovDegreesX,
 	const float fovDegreesY,
@@ -335,7 +335,7 @@ int RawModel::AddCameraPerspective(
 
 int RawModel::AddCameraOrthographic(
 	const char* name,
-	const long nodeId,
+	const uint64_t nodeId,
 	const float magX,
 	const float magY,
 	const float nearZ,
@@ -353,7 +353,7 @@ int RawModel::AddCameraOrthographic(
 	return (int)cameras.size() - 1;
 }
 
-int RawModel::AddNode(const long id, const char* name, const long parentId)
+int RawModel::AddNode(const uint64_t id, const char* name, const uint64_t parentId)
 {
 	assert(name[0] != '\0');
 
@@ -388,7 +388,7 @@ void RawModel::Condense()
 
 		surfaces.clear();
 
-		std::set<int> survivingSurfaceIds;
+		std::set<uint64_t> survivingSurfaceIds;
 		for (auto& triangle : triangles)
 		{
 			const RawSurface& surface = oldSurfaces[triangle.surfaceIndex];
@@ -454,10 +454,8 @@ void RawModel::Condense()
 
 		for (auto& triangle : triangles)
 		{
-			for (int j = 0; j < 3; j++)
-			{
-				triangle.verts[j] = AddVertex(oldVertices[triangle.verts[j]]);
-			}
+			for (int& vert : triangle.verts)
+				vert = AddVertex(oldVertices[vert]);
 		}
 	}
 }
@@ -660,7 +658,7 @@ void RawModel::CreateMaterialModels(
 
 		if (model->GetSurfaceCount() > prevSurfaceCount)
 		{
-			const std::vector<long>& jointIds = surfaces[sortedTriangles[i].surfaceIndex].jointIds;
+			const std::vector<uint64_t>& jointIds = surfaces[sortedTriangles[i].surfaceIndex].jointIds;
 			for (const auto& jointId : jointIds)
 			{
 				const int nodeIndex = GetNodeById(jointId);
@@ -757,7 +755,7 @@ void RawModel::CreateMaterialModels(
 	}
 }
 
-int RawModel::GetNodeById(const long nodeId) const
+int RawModel::GetNodeById(const uint64_t nodeId) const
 {
 	for (size_t i = 0; i < nodes.size(); i++)
 	{
@@ -769,7 +767,7 @@ int RawModel::GetNodeById(const long nodeId) const
 	return -1;
 }
 
-int RawModel::GetSurfaceById(const long surfaceId) const
+int RawModel::GetSurfaceById(const uint64_t surfaceId) const
 {
 	for (size_t i = 0; i < surfaces.size(); i++)
 	{

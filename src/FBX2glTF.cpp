@@ -310,15 +310,15 @@ int main(int argc, char* argv[])
 	{
 		if (do_flip_u && do_flip_v)
 		{
-			texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0 - uv[0], 1.0 - uv[1]); });
+			texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], 1.0f - uv[1]); });
 		}
 		else if (do_flip_u)
 		{
-			texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0 - uv[0], uv[1]); });
+			texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], uv[1]); });
 		}
 		else
 		{
-			texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0 - uv[1]); });
+			texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0f - uv[1]); });
 		}
 	}
 	if (verboseOutput)
@@ -454,7 +454,7 @@ int main(int argc, char* argv[])
 	if (data_render_model->binary->empty() == false)
 	{
 		const unsigned char* binaryData = &(*data_render_model->binary)[0];
-		unsigned long binarySize = data_render_model->binary->size();
+		size_t binarySize = data_render_model->binary->size();
 		if (fwrite(binaryData, binarySize, 1, fp) != 1)
 		{
 			fmt::fprintf(
