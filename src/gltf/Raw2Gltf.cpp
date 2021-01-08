@@ -251,8 +251,6 @@ ModelData* Raw2Gltf(
 		for (int materialIndex = 0; materialIndex < raw.GetMaterialCount(); materialIndex++)
 		{
 			const RawMaterial& material = raw.GetMaterial(materialIndex);
-			const bool isTransparent = material.type == RAW_MATERIAL_TYPE_TRANSPARENT ||
-				material.type == RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT;
 
 			// acquire the texture of a specific RawTextureUsage as *TextData, or nullptr if none exists
 			auto simpleTex = [&](RawTextureUsage usage) -> std::shared_ptr<TextureData>
@@ -270,36 +268,29 @@ ModelData* Raw2Gltf(
 			TextureData* opacityTexture = simpleTex(RAW_TEXTURE_USAGE_OPACITY).get();
 			TextureData* emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
 			TextureData* occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
-			if (!occlusionTexture)
-				occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_AMBIENT).get();
+
 
 			if (material.info->shadingModel == RAW_SHADING_MODEL_VRAY)
 			{
 				const RawVRayMatProps* rawMtl = (RawVRayMatProps*)material.info.get();
 
-				Vec4f diffuseColor = Vec4f(rawMtl->diffuseColor.x, rawMtl->diffuseColor.y, rawMtl->diffuseColor.z, rawMtl->refractionColor.x);
-				float metallic = metallicTexture ? 1.0f : 1.0f; // TODO: !!!
-				float bumpFactor = rawMtl->bumpMultiplier;
-				float roughness = roughnessTexture ? 1.0f : 1.0f; // TODO: !!!!
-
-				Vec3f emissiveColor = rawMtl->selfIlluminationColor;
-
 				std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
 					material.name,
 					material.info->shadingModel,
-					isTransparent,
+					rawMtl->alphaTest,
+					rawMtl->isDoubleSided,
 					diffuseTexture,
-					diffuseColor,
+					Vec4f(rawMtl->diffuseColor.x, rawMtl->diffuseColor.y, rawMtl->diffuseColor.z, rawMtl->refractionColor.x),
 					normalTexture,
 					metallicTexture,
-					metallic,
+					rawMtl->metalness,
 					roughnessTexture,
-					roughness,
+					rawMtl->roughness,
 					occlusionTexture,
 					emissiveTexture,
-					emissiveColor,
+					rawMtl->selfIlluminationColor,
 					bumpTexture,
-					bumpFactor,
+					rawMtl->bumpMultiplier,
 					opacityTexture));
 
 				materialsById[material.id] = mData;
@@ -307,14 +298,10 @@ ModelData* Raw2Gltf(
 				if (options.enableUserProperties)
 					mData->userProperties = material.userProperties;
 			}
-			else
+			else // Traditional FBX material (Standard Material in 3ds max)
 			{
-				/**
-				 * Traditional FBX Material -> PBR Met/Rough glTF.
-				 *
-				 * Diffuse channel is used as base colour. Simple constants for metallic and roughness.
-				 */
 				const RawTraditionalMatProps* rawMtl = (RawTraditionalMatProps*)material.info.get();
+
 				Vec4f diffuseColor = rawMtl->diffuseFactor;
 
 				float metallic = metallicTexture ? 1.0f : rawMtl->specularLevel;
@@ -342,7 +329,8 @@ ModelData* Raw2Gltf(
 				std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
 					material.name,
 					material.info->shadingModel,
-					isTransparent,
+					rawMtl->alphaTest,
+					rawMtl->isDoubleSided,
 					diffuseTexture,
 					diffuseColor,
 					normalTexture,

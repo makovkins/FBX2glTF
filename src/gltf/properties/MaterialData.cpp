@@ -44,7 +44,8 @@ clamp(const Vec4f& vec, const Vec4f& bottom = VEC4F_ZERO, const Vec4f& top = VEC
 MaterialData::MaterialData(
 	std::string name,
 	RawShadingModel shadingModel,
-	bool isTransparent,
+	float alphaTest,
+	bool isDoubleSided,
 	const TextureData* diffuseTexture,
 	const Vec4f diffuseColor,
 	const TextureData* normalTexture,
@@ -60,7 +61,8 @@ MaterialData::MaterialData(
 	const TextureData* opacityTexture) :
 	name(std::move(name)),
 	shadingModel(shadingModel),
-	isTransparent(isTransparent),
+	alphaTest(alphaTest),
+	isDoubleSided(isDoubleSided),
 	diffuseTexture(Tex::ref(diffuseTexture)),
 	diffuseColor(diffuseColor),
 	normalTexture(Tex::ref(normalTexture)),
@@ -81,30 +83,21 @@ json MaterialData::serialize() const
 {
 	json result = {
 		{"name", name},
+		{"shadingModel", Describe(shadingModel)},
 		{
 			"extras",
 			{
 				{
 					"fromFBX",
 					{
-						{"shadingModel", Describe(shadingModel)},
-						{"isTruePBR", shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH}
 					}
 				}
 			}
 		}
 	};
 
-	std::string lowerCaseName = name;
-	std::for_each(lowerCaseName.begin(), lowerCaseName.end(), [](char& c) { c = std::tolower(c); });
-
-	if (lowerCaseName.find("alphatest") != std::string::npos)
-		result["alphaMode"] = "MASK";
-	else
-		result["alphaMode"] = isTransparent ? "BLEND" : "OPAQUE";
-
-	if (lowerCaseName.find("twosided") != std::string::npos)
-		result["doubleSided"] = true;
+	result["alphaTest"] = alphaTest;
+	result["doubleSided"] = isDoubleSided;
 
 	if (diffuseTexture != nullptr)
 		result["diffuseTexture"] = *diffuseTexture;

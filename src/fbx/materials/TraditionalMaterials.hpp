@@ -22,8 +22,6 @@ struct FbxTraditionalMaterialInfo : FbxMaterialInfo
 	{
 	}
 
-	FbxFileTexture* texAmbient{};
-	FbxVector4 colAmbient{};
 	FbxFileTexture* texSpecular{};
 	FbxVector4 colSpecular{};
 	FbxFileTexture* texDiffuse{};

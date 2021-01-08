@@ -106,8 +106,6 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::Reso
 		return std::make_tuple(vec, facTex);
 	};
 
-	std::tie(res->colAmbient, res->texAmbient) =
-		handleBasicProperty(FbxSurfaceMaterial::sAmbient, FbxSurfaceMaterial::sAmbientFactor);
 	std::tie(res->colSpecular, res->texSpecular) =
 		handleBasicProperty(FbxSurfaceMaterial::sSpecular, FbxSurfaceMaterial::sSpecularFactor);
 	std::tie(res->colDiffuse, res->texDiffuse) =

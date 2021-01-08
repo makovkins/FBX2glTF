@@ -26,14 +26,15 @@ struct MaterialData : Holdable
 	MaterialData(
 		std::string name,
 		RawShadingModel shadingModel,
-		bool isTransparent,		
+		float alphaTest,
+		bool isDoubleSided,
 		const TextureData* diffuseTexture,
 		const Vec4f diffuseColor,
 		const TextureData* normalTexture,
 		const TextureData* metallicTexture,
 		const float metallic,
 		const TextureData* roughnessTexture,
-		const float roughness,		
+		const float roughness,
 		const TextureData* occlusionTexture,
 		const TextureData* emissiveTexture,
 		const Vec3f& emissiveColor,
@@ -45,12 +46,13 @@ struct MaterialData : Holdable
 
 	const std::string name;
 	const RawShadingModel shadingModel;
-	const bool isTransparent;	
+	const float alphaTest;
+	const bool isDoubleSided;
 	const std::unique_ptr<const Tex> diffuseTexture;
 	const Vec4f diffuseColor;
 	const std::unique_ptr<const Tex> normalTexture;
 	const std::unique_ptr<const Tex> metallicTexture;
-	const float metallic;	
+	const float metallic;
 	const std::unique_ptr<const Tex> roughnessTexture;
 	const float roughness;
 	const std::unique_ptr<const Tex> occlusionTexture;

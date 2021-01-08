@@ -15,6 +15,7 @@ struct FbxVRayMaterialInfo : FbxMaterialInfo
 	FbxVRayMaterialInfo(const FbxUInt64 id, const FbxString& name, const FbxString& shadingModel)
 		: FbxMaterialInfo(id, name, shadingModel),
 		unlit(false),
+		transparent(false),
 		doubleSided(false),
 		alphaTest(0),
 		diffuseColor(1.0, 1.0, 1.0),
@@ -38,8 +39,9 @@ struct FbxVRayMaterialInfo : FbxMaterialInfo
 	}
 
 	bool unlit;
+	bool transparent;
 	bool doubleSided;
-	float alphaTest;
+	float alphaTest; // 0 if alpha test is disabled.
 
 	FbxVector4 diffuseColor;
 	FbxFileTexture* diffuseTexture;

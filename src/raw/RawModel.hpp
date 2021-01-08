@@ -97,35 +97,21 @@ struct RawTriangle
 
 enum RawShadingModel
 {
-	RAW_SHADING_MODEL_UNKNOWN = -1,
-	RAW_SHADING_MODEL_CONSTANT,
-	RAW_SHADING_MODEL_LAMBERT,
-	RAW_SHADING_MODEL_BLINN,
-	RAW_SHADING_MODEL_PHONG,
-	RAW_SHADING_MODEL_PBR_MET_ROUGH,
+	RAW_SHADING_MODEL_STANDARD,
 	RAW_SHADING_MODEL_VRAY,
-	RAW_SHADING_MODEL_MAX
+	RAW_SHADING_MODEL_UNLIT
 };
 
 inline std::string Describe(RawShadingModel model)
 {
 	switch (model)
 	{
-	case RAW_SHADING_MODEL_UNKNOWN:
-		return "<unknown>";
-	case RAW_SHADING_MODEL_CONSTANT:
-		return "Constant";
-	case RAW_SHADING_MODEL_LAMBERT:
-		return "Lambert";
-	case RAW_SHADING_MODEL_BLINN:
-		return "Blinn";
-	case RAW_SHADING_MODEL_PHONG:
-		return "Phong";
-	case RAW_SHADING_MODEL_PBR_MET_ROUGH:
-		return "Metallic/Roughness";
+	case RAW_SHADING_MODEL_STANDARD:
+		return "Standard";
 	case RAW_SHADING_MODEL_VRAY:
 		return "VRay";
-	case RAW_SHADING_MODEL_MAX:
+	case RAW_SHADING_MODEL_UNLIT:
+		return "Unlit";
 	default:
 		return "<unknown>";
 	}
@@ -134,7 +120,6 @@ inline std::string Describe(RawShadingModel model)
 enum RawTextureUsage
 {
 	RAW_TEXTURE_USAGE_NONE = -1,
-	RAW_TEXTURE_USAGE_AMBIENT,
 	RAW_TEXTURE_USAGE_DIFFUSE,
 	RAW_TEXTURE_USAGE_NORMAL,
 	RAW_TEXTURE_USAGE_BUMP,
@@ -156,8 +141,6 @@ inline std::string Describe(RawTextureUsage usage)
 	{
 	case RAW_TEXTURE_USAGE_NONE:
 		return "<none>";
-	case RAW_TEXTURE_USAGE_AMBIENT:
-		return "ambient";
 	case RAW_TEXTURE_USAGE_DIFFUSE:
 		return "diffuse";
 	case RAW_TEXTURE_USAGE_NORMAL:
@@ -200,21 +183,18 @@ struct RawTexture
 	std::string fileLocation; // inferred path in local filesystem, or ""
 };
 
-enum RawMaterialType
-{
-	RAW_MATERIAL_TYPE_OPAQUE,
-	RAW_MATERIAL_TYPE_TRANSPARENT,
-	RAW_MATERIAL_TYPE_SKINNED_OPAQUE,
-	RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT,
-};
-
 struct RawMatProps
 {
-	explicit RawMatProps(RawShadingModel shadingModel) : shadingModel(shadingModel)
+	explicit RawMatProps(RawShadingModel shadingModel, float alphaTest, bool isDoubleSided) :
+		shadingModel(shadingModel),
+		alphaTest(alphaTest),
+		isDoubleSided(isDoubleSided)
 	{
 	}
 
 	const RawShadingModel shadingModel;
+	const float alphaTest;
+	const bool isDoubleSided;
 
 	virtual bool operator!=(const RawMatProps& other) const
 	{
@@ -223,7 +203,9 @@ struct RawMatProps
 
 	virtual bool operator==(const RawMatProps& other) const
 	{
-		return shadingModel == other.shadingModel;
+		return shadingModel == other.shadingModel &&
+			alphaTest == other.alphaTest &&
+			isDoubleSided == other.isDoubleSided;
 	};
 };
 
@@ -231,15 +213,15 @@ struct RawTraditionalMatProps : RawMatProps
 {
 	RawTraditionalMatProps(
 		RawShadingModel shadingModel,
-		const Vec3f&& ambientFactor,
+		float alphaTest,
+		const bool isDoubleSided,
 		const Vec4f&& diffuseFactor,
 		const Vec3f&& emissiveFactor,
 		const Vec3f&& specularFactor,
 		const float specularLevel,
 		const float shininess,
 		float bumpFactor)
-		: RawMatProps(shadingModel),
-		  ambientFactor(ambientFactor),
+		: RawMatProps(shadingModel, alphaTest, isDoubleSided),
 		  diffuseFactor(diffuseFactor),
 		  emissiveFactor(emissiveFactor),
 		  specularFactor(specularFactor),
@@ -249,7 +231,6 @@ struct RawTraditionalMatProps : RawMatProps
 	{
 	}
 
-	const Vec3f ambientFactor;
 	const Vec4f diffuseFactor;
 	const Vec3f emissiveFactor;
 	const Vec3f specularFactor;
@@ -262,7 +243,7 @@ struct RawTraditionalMatProps : RawMatProps
 		if (RawMatProps::operator==(other))
 		{
 			const auto& typed = (RawTraditionalMatProps&)other;
-			return ambientFactor == typed.ambientFactor && diffuseFactor == typed.diffuseFactor &&
+			return diffuseFactor == typed.diffuseFactor &&
 				specularFactor == typed.specularFactor && emissiveFactor == typed.emissiveFactor &&
 				specularLevel == typed.specularLevel && shininess == typed.shininess &&
 				bumpFactor == typed.bumpFactor;
@@ -275,17 +256,21 @@ struct RawVRayMatProps : RawMatProps
 {
 	RawVRayMatProps(
 		RawShadingModel shadingModel,
+		const bool alphaTest,
+		const bool isDoubleSided,
 		const Vec3f&& diffuseColor,
 		const Vec3f&& reflectionColor,
 		const float roughness,
+		const float metalness,
 		const Vec3f&& refractionColor,
 		const Vec3f&& selfIlluminationColor,
 		const float selfIlluminationMultiplier,
 		float bumpMultiplier)
-		: RawMatProps(shadingModel),
+		: RawMatProps(shadingModel, alphaTest, isDoubleSided),
 		diffuseColor(diffuseColor),
 		reflectionColor(reflectionColor),
 		roughness(roughness),
+		metalness(metalness),
 		refractionColor(refractionColor),
 		selfIlluminationColor(selfIlluminationColor),
 		selfIlluminationMultiplier(selfIlluminationMultiplier),
@@ -296,6 +281,7 @@ struct RawVRayMatProps : RawMatProps
 	const Vec3f diffuseColor;
 	const Vec3f reflectionColor;
 	const float roughness;
+	const float metalness;
 	const Vec3f refractionColor;
 	const Vec3f selfIlluminationColor;
 	const float selfIlluminationMultiplier;
@@ -309,6 +295,7 @@ struct RawVRayMatProps : RawMatProps
 			return diffuseColor == typed.diffuseColor &&
 				reflectionColor == typed.reflectionColor  &&
 				roughness == typed.roughness &&
+				metalness == typed.metalness &&
 				refractionColor == typed.refractionColor &&
 				selfIlluminationColor == typed.selfIlluminationColor &&
 				selfIlluminationMultiplier == typed.selfIlluminationMultiplier &&
@@ -318,51 +305,10 @@ struct RawVRayMatProps : RawMatProps
 	}
 };
 
-struct RawMetRoughMatProps : RawMatProps
-{
-	RawMetRoughMatProps(
-		RawShadingModel shadingModel,
-		const Vec4f&& diffuseFactor,
-		const Vec3f&& emissiveFactor,
-		float emissiveIntensity,
-		float metallic,
-		float roughness,
-		bool invertRoughnessMap)
-		: RawMatProps(shadingModel),
-		  diffuseFactor(diffuseFactor),
-		  emissiveFactor(emissiveFactor),
-		  emissiveIntensity(emissiveIntensity),
-		  metallic(metallic),
-		  roughness(roughness),
-		  invertRoughnessMap(invertRoughnessMap)
-	{
-	}
-
-	const Vec4f diffuseFactor;
-	const Vec3f emissiveFactor;
-	const float emissiveIntensity;
-	const float metallic;
-	const float roughness;
-	const bool invertRoughnessMap;
-
-	bool operator==(const RawMatProps& other) const override
-	{
-		if (RawMatProps::operator==(other))
-		{
-			const auto& typed = (RawMetRoughMatProps&)other;
-			return diffuseFactor == typed.diffuseFactor && emissiveFactor == typed.emissiveFactor &&
-				emissiveIntensity == typed.emissiveIntensity && metallic == typed.metallic &&
-				roughness == typed.roughness;
-		}
-		return false;
-	}
-};
-
 struct RawMaterial
 {
 	uint64_t id;
 	std::string name;
-	RawMaterialType type;
 	std::shared_ptr<RawMatProps> info;
 	int textures[RAW_TEXTURE_USAGE_MAX];
 	std::vector<std::string> userProperties;
@@ -486,7 +432,6 @@ public:
 	int AddMaterial(
 		const uint64_t id,
 		const char* name,
-		const RawMaterialType materialType,
 		const int textures[RAW_TEXTURE_USAGE_MAX],
 		std::shared_ptr<RawMatProps> materialInfo,
 		const std::vector<std::string>& userProperties);

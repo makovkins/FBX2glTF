@@ -152,7 +152,6 @@ int RawModel::AddMaterial(const RawMaterial& material)
 	return AddMaterial(
 		material.id,
 		material.name.c_str(),
-		material.type,
 		material.textures,
 		material.info,
 		material.userProperties);
@@ -161,7 +160,6 @@ int RawModel::AddMaterial(const RawMaterial& material)
 int RawModel::AddMaterial(
 	const uint64_t id,
 	const char* name,
-	const RawMaterialType materialType,
 	const int textures[RAW_TEXTURE_USAGE_MAX],
 	std::shared_ptr<RawMatProps> materialInfo,
 	const std::vector<std::string>& userProperties)
@@ -169,22 +167,17 @@ int RawModel::AddMaterial(
 	for (size_t i = 0; i < materials.size(); i++)
 	{
 		if (materials[i].name != name)
-		{
 			continue;
-		}
-		if (materials[i].type != materialType)
-		{
-			continue;
-		}
+
 		if (*(materials[i].info) != *materialInfo)
-		{
 			continue;
-		}
+
 		bool match = true;
 		for (int j = 0; match && j < RAW_TEXTURE_USAGE_MAX; j++)
 		{
 			match = match && (materials[i].textures[j] == textures[j]);
 		}
+
 		if (materials[i].userProperties.size() != userProperties.size())
 		{
 			match = false;
@@ -192,27 +185,21 @@ int RawModel::AddMaterial(
 		else
 		{
 			for (int j = 0; match && j < userProperties.size(); j++)
-			{
 				match = match && (materials[i].userProperties[j] == userProperties[j]);
-			}
 		}
+
 		if (match)
-		{
 			return (int)i;
-		}
 	}
 
 	RawMaterial material;
 	material.id = id;
 	material.name = name;
-	material.type = materialType;
 	material.info = materialInfo;
 	material.userProperties = userProperties;
 
 	for (int i = 0; i < RAW_TEXTURE_USAGE_MAX; i++)
-	{
 		material.textures[i] = textures[i];
-	}
 
 	materials.emplace_back(material);
 
@@ -230,9 +217,8 @@ int RawModel::AddLight(
 	for (size_t i = 0; i < lights.size(); i++)
 	{
 		if (lights[i].name != name || lights[i].type != lightType)
-		{
 			continue;
-		}
+
 		// only care about cone angles for spot
 		if (lights[i].type == RAW_LIGHT_TYPE_SPOT)
 		{
@@ -242,8 +228,10 @@ int RawModel::AddLight(
 				continue;
 			}
 		}
+
 		return (int)i;
 	}
+
 	RawLight light{
 		name,
 		lightType,
@@ -252,6 +240,7 @@ int RawModel::AddLight(
 		innerConeAngle,
 		outerConeAngle,
 	};
+
 	lights.push_back(light);
 	return (int)lights.size() - 1;
 }
@@ -261,9 +250,7 @@ int RawModel::AddSurface(const RawSurface& surface)
 	for (size_t i = 0; i < surfaces.size(); i++)
 	{
 		if (StringUtils::CompareNoCase(surfaces[i].name, surface.name) == 0)
-		{
 			return (int)i;
-		}
 	}
 
 	surfaces.emplace_back(surface);
@@ -277,10 +264,9 @@ int RawModel::AddSurface(const char* name, const uint64_t surfaceId)
 	for (size_t i = 0; i < surfaces.size(); i++)
 	{
 		if (surfaces[i].id == surfaceId)
-		{
 			return (int)i;
-		}
 	}
+
 	RawSurface surface;
 	surface.id = surfaceId;
 	surface.name = name;
@@ -360,9 +346,7 @@ int RawModel::AddNode(const uint64_t id, const char* name, const uint64_t parent
 	for (size_t i = 0; i < nodes.size(); i++)
 	{
 		if (nodes[i].id == id)
-		{
 			return (int)i;
-		}
 	}
 
 	RawNode joint;
@@ -397,6 +381,7 @@ void RawModel::Condense()
 			triangle.surfaceIndex = surfaceIndex;
 			survivingSurfaceIds.emplace(surface.id);
 		}
+
 		// clear out references to meshes that no longer exist
 		for (auto& node : nodes)
 		{

@@ -42,40 +42,6 @@ static bool TriangleTexturePolarity(const Vec2f& uv0, const Vec2f& uv1, const Ve
 	return (d0[0] * d1[1] - d0[1] * d1[0] < 0.0f);
 }
 
-static RawMaterialType GetMaterialType(
-	const RawModel& raw,
-	const int textures[RAW_TEXTURE_USAGE_MAX],
-	const bool vertexTransparency,
-	const bool skinned)
-{
-	// DIFFUSE and ALBEDO are different enough to represent distinctly, but they both help determine
-	// transparency.
-	int diffuseTexture = textures[RAW_TEXTURE_USAGE_DIFFUSE];
-	if (diffuseTexture < 0)
-		diffuseTexture = textures[RAW_TEXTURE_USAGE_ALBEDO];
-
-	int opacityTexture = textures[RAW_TEXTURE_USAGE_OPACITY];
-	if (opacityTexture >= 0)
-		return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
-
-	// determine material type based on texture occlusion.
-	if (diffuseTexture >= 0)
-	{
-		return (raw.GetTexture(diffuseTexture).occlusion == RAW_TEXTURE_OCCLUSION_OPAQUE)
-			       ? (skinned ? RAW_MATERIAL_TYPE_SKINNED_OPAQUE : RAW_MATERIAL_TYPE_OPAQUE)
-			       : (skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT);
-	}
-
-	// else if there is any vertex transparency, treat whole mesh as transparent
-	if (vertexTransparency)
-	{
-		return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
-	}
-
-	// Default to simply opaque.
-	return skinned ? RAW_MATERIAL_TYPE_SKINNED_OPAQUE : RAW_MATERIAL_TYPE_OPAQUE;
-}
-
 static void ReadMesh(
 	RawModel& raw,
 	FbxScene* pScene,
@@ -251,8 +217,9 @@ static void ReadMesh(
 			materialId = -1;
 			rawMatProps.reset(
 				new RawTraditionalMatProps(
-					RAW_SHADING_MODEL_LAMBERT,
-					Vec3f(0, 0, 0),
+					RAW_SHADING_MODEL_STANDARD,
+					0.0f,
+					false,
 					Vec4f(.5, .5, .5, 1),
 					Vec3f(0, 0, 0),
 					Vec3f(0, 0, 0),
@@ -281,6 +248,8 @@ static void ReadMesh(
 			{
 				FbxVRayMaterialInfo* fbxMatInfo = static_cast<FbxVRayMaterialInfo*>(fbxMaterial.get());
 
+				RawShadingModel shadingModel = fbxMatInfo->unlit ? RAW_SHADING_MODEL_UNLIT : RAW_SHADING_MODEL_VRAY;
+
 				maybeAddTexture(fbxMatInfo->diffuseTexture, RAW_TEXTURE_USAGE_DIFFUSE);
 				maybeAddTexture(fbxMatInfo->bumpTexture, fbxMatInfo->useBumpAsNormal ? RAW_TEXTURE_USAGE_NORMAL : RAW_TEXTURE_USAGE_BUMP);
 				maybeAddTexture(fbxMatInfo->selfIlluminationTexture, RAW_TEXTURE_USAGE_EMISSIVE);
@@ -290,10 +259,13 @@ static void ReadMesh(
 
 				rawMatProps.reset(
 					new RawVRayMatProps(
-						RAW_SHADING_MODEL_VRAY,
+						shadingModel,
+						fbxMatInfo->alphaTest,
+						fbxMatInfo->doubleSided,
 						toVec3f(fbxMatInfo->diffuseColor),
 						toVec3f(fbxMatInfo->reflectionColor),
 						(float)fbxMatInfo->roughness,
+						(float)fbxMatInfo->metalness,
 						toVec3f(fbxMatInfo->refractionColor),
 						toVec3f(fbxMatInfo->selfIlluminationColor),
 						(float)fbxMatInfo->selfIlluminationMultiplier,
@@ -304,30 +276,33 @@ static void ReadMesh(
 			else
 			{
 				FbxTraditionalMaterialInfo* fbxMatInfo = static_cast<FbxTraditionalMaterialInfo*>(fbxMaterial.get());
-				RawShadingModel shadingModel;
-				if (fbxMaterial->shadingModel == "Lambert")
-					shadingModel = RAW_SHADING_MODEL_LAMBERT;
-				else if (!fbxMaterial->shadingModel.CompareNoCase("Blinn"))
-					shadingModel = RAW_SHADING_MODEL_BLINN;
-				else if (!fbxMaterial->shadingModel.CompareNoCase("Phong"))
-					shadingModel = RAW_SHADING_MODEL_PHONG;
-				else if (!fbxMaterial->shadingModel.CompareNoCase("Constant"))
-					shadingModel = RAW_SHADING_MODEL_PHONG;
-				else
-					shadingModel = RAW_SHADING_MODEL_UNKNOWN;
+
+				std::string lowerCaseName(fbxMatInfo->name.Lower());
+
+				RawShadingModel shadingModel = RAW_SHADING_MODEL_STANDARD;
+				if (lowerCaseName.find("unlit") != -1)
+					shadingModel = RAW_SHADING_MODEL_UNLIT;
+
+				float alphaTest = 0.0f;
+				if (lowerCaseName.find("alphatest") != -1)
+					alphaTest = 0.5f;
+
+				bool isDoubleSided = false;
+				if (lowerCaseName.find("twosided") != -1)
+					isDoubleSided = true;
 
 				maybeAddTexture(fbxMatInfo->texDiffuse, RAW_TEXTURE_USAGE_DIFFUSE);
 				maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
 				maybeAddTexture(fbxMatInfo->texBump, RAW_TEXTURE_USAGE_BUMP);
 				maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
 				maybeAddTexture(fbxMatInfo->texShininess, RAW_TEXTURE_USAGE_SHININESS);
-				maybeAddTexture(fbxMatInfo->texAmbient, RAW_TEXTURE_USAGE_AMBIENT);
 				maybeAddTexture(fbxMatInfo->texSpecular, RAW_TEXTURE_USAGE_SPECULAR);
 				maybeAddTexture(fbxMatInfo->texOpacity, RAW_TEXTURE_USAGE_OPACITY);
 				rawMatProps.reset(
 					new RawTraditionalMatProps(
 						shadingModel,
-						toVec3f(fbxMatInfo->colAmbient),
+						alphaTest,
+						isDoubleSided,
 						toVec4f(fbxMatInfo->colDiffuse),
 						toVec3f(fbxMatInfo->colEmissive),
 						toVec3f(fbxMatInfo->colSpecular),
@@ -519,11 +494,9 @@ static void ReadMesh(
 		for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
 			rawVertexIndices[vertexIndex] = raw.AddVertex(rawVertices[vertexIndex]);
 
-		const RawMaterialType materialType = GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
 		const int rawMaterialIndex = raw.AddMaterial(
 			materialId,
 			materialName,
-			materialType,
 			textures,
 			rawMatProps,
 			userProperties);
