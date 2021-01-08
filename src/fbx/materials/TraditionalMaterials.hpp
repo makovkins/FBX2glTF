@@ -40,10 +40,8 @@ struct FbxTraditionalMaterialInfo : FbxMaterialInfo
 class FbxTraditionalMaterialResolver : FbxMaterialResolver<FbxTraditionalMaterialInfo>
 {
 public:
-	FbxTraditionalMaterialResolver(
-		FbxSurfaceMaterial* fbxMaterial,
-		const std::map<const FbxTexture*, FbxString>& textureLocations)
-		: FbxMaterialResolver(fbxMaterial, textureLocations)
+	FbxTraditionalMaterialResolver(FbxSurfaceMaterial* fbxMaterial)
+		: FbxMaterialResolver(fbxMaterial)
 	{
 	}
 

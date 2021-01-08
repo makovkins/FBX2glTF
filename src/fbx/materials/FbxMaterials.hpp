@@ -30,10 +30,8 @@ template <class T>
 class FbxMaterialResolver
 {
 public:
-	FbxMaterialResolver(
-		FbxSurfaceMaterial* fbxMaterial,
-		const std::map<const FbxTexture*, FbxString>& textureLocations)
-		: fbxMaterial(fbxMaterial), textureLocations(textureLocations)
+	FbxMaterialResolver(FbxSurfaceMaterial* fbxMaterial)
+		: fbxMaterial(fbxMaterial)
 	{
 	}
 
@@ -43,23 +41,18 @@ public:
 
 protected:
 	const FbxSurfaceMaterial* fbxMaterial;
-	const std::map<const FbxTexture*, FbxString> textureLocations;
 };
 
 class FbxMaterialsAccess
 {
 public:
-	FbxMaterialsAccess(
-		const FbxMesh* pMesh,
-		const std::map<const FbxTexture*, FbxString>& textureLocations);
+	FbxMaterialsAccess(const FbxMesh* pMesh);
 
 	const std::shared_ptr<FbxMaterialInfo> GetMaterial(const int polygonIndex) const;
 
 	const std::vector<std::string> GetUserProperties(const int polygonIndex) const;
 
-	static std::unique_ptr<FbxMaterialInfo> GetMaterialInfo(
-		FbxSurfaceMaterial* material,
-		const std::map<const FbxTexture*, FbxString>& textureLocations);
+	static std::unique_ptr<FbxMaterialInfo> GetMaterialInfo(FbxSurfaceMaterial* material);
 
 private:
 	FbxGeometryElement::EMappingMode mappingMode;

@@ -16,14 +16,9 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::Reso
 
 		FbxDouble val(0);
 		FbxFileTexture* tex = prop.GetSrcObject<FbxFileTexture>();
-		if (tex != nullptr && textureLocations.find(tex) == textureLocations.end())
-		{
-			tex = nullptr;
-		}
 		if (tex == nullptr && prop.IsValid())
-		{
 			val = prop.Get<FbxDouble>();
-		}
+
 		return std::make_tuple(val, tex);
 	};
 
@@ -33,14 +28,9 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::Reso
 
 		FbxDouble3 val(1, 1, 1);
 		FbxFileTexture* tex = prop.GetSrcObject<FbxFileTexture>();
-		if (tex != nullptr && textureLocations.find(tex) == textureLocations.end())
-		{
-			tex = nullptr;
-		}
 		if (tex == nullptr && prop.IsValid())
-		{
 			val = prop.Get<FbxDouble3>();
-		}
+
 		return std::make_tuple(val, tex);
 	};
 
@@ -55,23 +45,12 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::Reso
 		FbxDouble factorVal(1);
 
 		FbxFileTexture* colTex = colProp.GetSrcObject<FbxFileTexture>();
-		if (colTex != nullptr && textureLocations.find(colTex) == textureLocations.end())
-		{
-			colTex = nullptr;
-		}
 		if (colTex == nullptr && colProp.IsValid())
-		{
 			colorVal = colProp.Get<FbxDouble3>();
-		}
+
 		FbxFileTexture* facTex = facProp.GetSrcObject<FbxFileTexture>();
-		if (facTex != nullptr && textureLocations.find(facTex) == textureLocations.end())
-		{
-			facTex = nullptr;
-		}
 		if (facTex == nullptr && facProp.IsValid())
-		{
 			factorVal = facProp.Get<FbxDouble>();
-		}
 
 		auto val = FbxVector4(
 			colorVal[0] * factorVal, colorVal[1] * factorVal, colorVal[2] * factorVal, factorVal);

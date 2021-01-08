@@ -12,8 +12,7 @@
 #include "VRayMaterial.hpp"
 
 FbxMaterialsAccess::FbxMaterialsAccess(
-	const FbxMesh* pMesh,
-	const std::map<const FbxTexture*, FbxString>& textureLocations)
+	const FbxMesh* pMesh)
 	: mappingMode(FbxGeometryElement::eNone), mesh(nullptr), indices(nullptr)
 {
 	if (pMesh->GetElementMaterialCount() <= 0)
@@ -44,7 +43,7 @@ FbxMaterialsAccess::FbxMaterialsAccess(
 
 		auto summary = summaries[materialNum];
 		if (summary == nullptr)
-			summary = summaries[materialNum] = GetMaterialInfo(surfaceMaterial, textureLocations);
+			summary = summaries[materialNum] = GetMaterialInfo(surfaceMaterial);
 
 		if (materialNum >= userProperties.size())
 			userProperties.resize(materialNum + 1);
@@ -92,18 +91,15 @@ const std::vector<std::string> FbxMaterialsAccess::GetUserProperties(const int p
 	return std::vector<std::string>();
 }
 
-std::unique_ptr<FbxMaterialInfo> FbxMaterialsAccess::GetMaterialInfo(
-	FbxSurfaceMaterial* material,
-	const std::map<const FbxTexture*,
-	FbxString>& textureLocations)
+std::unique_ptr<FbxMaterialInfo> FbxMaterialsAccess::GetMaterialInfo(FbxSurfaceMaterial* material)
 {
 	std::unique_ptr<FbxMaterialInfo> res;
 
-	res = FbxVRayMaterialResolver(material, textureLocations).Resolve();
+	res = FbxVRayMaterialResolver(material).Resolve();
 	if (res)
 		return res;
 
-	res = FbxTraditionalMaterialResolver(material, textureLocations).Resolve();
+	res = FbxTraditionalMaterialResolver(material).Resolve();
 	if (res)
 		return res;
 

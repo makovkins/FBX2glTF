@@ -132,6 +132,7 @@ enum RawTextureUsage
 	RAW_TEXTURE_USAGE_ROUGHNESS,
 	RAW_TEXTURE_USAGE_METALLIC,
 	RAW_TEXTURE_USAGE_OPACITY,
+	RAW_TEXTURE_USAGE_LIGHTMAP,
 	RAW_TEXTURE_USAGE_MAX
 };
 
@@ -163,6 +164,8 @@ inline std::string Describe(RawTextureUsage usage)
 		return "metallic";
 	case RAW_TEXTURE_USAGE_OPACITY:
 		return "opacity";
+	case RAW_TEXTURE_USAGE_LIGHTMAP:
+		return "lightmap";
 	case RAW_TEXTURE_USAGE_MAX:
 	default:
 		return "unknown";
@@ -256,11 +259,13 @@ struct RawVRayMatProps : RawMatProps
 {
 	RawVRayMatProps(
 		RawShadingModel shadingModel,
-		const bool alphaTest,
+		const float alphaTest,
 		const bool isDoubleSided,
 		const Vec3f&& diffuseColor,
 		const Vec3f&& reflectionColor,
 		const float roughness,
+		const float roughnessMapMin,
+		const float roughnessMapMax,
 		const float metalness,
 		const Vec3f&& refractionColor,
 		const Vec3f&& selfIlluminationColor,
@@ -270,6 +275,8 @@ struct RawVRayMatProps : RawMatProps
 		diffuseColor(diffuseColor),
 		reflectionColor(reflectionColor),
 		roughness(roughness),
+		roughnessMapMin(roughnessMapMin),
+		roughnessMapMax(roughnessMapMax),
 		metalness(metalness),
 		refractionColor(refractionColor),
 		selfIlluminationColor(selfIlluminationColor),
@@ -281,6 +288,8 @@ struct RawVRayMatProps : RawMatProps
 	const Vec3f diffuseColor;
 	const Vec3f reflectionColor;
 	const float roughness;
+	const float roughnessMapMin;
+	const float roughnessMapMax;
 	const float metalness;
 	const Vec3f refractionColor;
 	const Vec3f selfIlluminationColor;
@@ -295,11 +304,46 @@ struct RawVRayMatProps : RawMatProps
 			return diffuseColor == typed.diffuseColor &&
 				reflectionColor == typed.reflectionColor  &&
 				roughness == typed.roughness &&
+				roughnessMapMin == typed.roughnessMapMin &&
+				roughnessMapMax == typed.roughnessMapMax &&
 				metalness == typed.metalness &&
 				refractionColor == typed.refractionColor &&
 				selfIlluminationColor == typed.selfIlluminationColor &&
 				selfIlluminationMultiplier == typed.selfIlluminationMultiplier &&
 				bumpMultiplier == typed.bumpMultiplier;
+		}
+		return false;
+	}
+};
+
+struct RawUnlitMatProps : RawMatProps
+{
+	RawUnlitMatProps(
+		RawShadingModel shadingModel,
+		const float alphaTest,
+		const bool isDoubleSided,
+		const Vec4f&& diffuseColor,
+		const Vec3f&& selfIlluminationColor,
+		const float selfIlluminationMultiplier)
+		: RawMatProps(shadingModel, alphaTest, isDoubleSided),
+		diffuseColor(diffuseColor),
+		selfIlluminationColor(selfIlluminationColor),
+		selfIlluminationMultiplier(selfIlluminationMultiplier)
+	{
+	}
+
+	const Vec4f diffuseColor;
+	const Vec3f selfIlluminationColor;
+	const float selfIlluminationMultiplier;
+
+	bool operator==(const RawMatProps& other) const override
+	{
+		if (RawMatProps::operator==(other))
+		{
+			const auto& typed = (RawUnlitMatProps&)other;
+			return diffuseColor == typed.diffuseColor &&
+				selfIlluminationColor == typed.selfIlluminationColor &&
+				selfIlluminationMultiplier == typed.selfIlluminationMultiplier;
 		}
 		return false;
 	}

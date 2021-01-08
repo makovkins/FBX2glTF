@@ -15,8 +15,7 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 		if (prop.IsValid())
 		{
 			FbxFileTexture* tex = prop.GetSrcObject<FbxFileTexture>();
-			if (tex != nullptr && textureLocations.find(tex) == textureLocations.end())
-				return tex;
+			return tex;
 		}
 
 		return nullptr;
@@ -141,7 +140,7 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 
 	const FbxProperty bumpTextureMultiplierProp = mapsProp.Find("texmap_bump_multiplier");
 	if (bumpTextureMultiplierProp.IsValid())
-		mtl->bumpMultiplier = bumpTextureMultiplierProp.Get<FbxDouble>();
+		mtl->bumpMultiplier = bumpTextureMultiplierProp.Get<FbxDouble>() / 100.0;
 
 	mtl->useBumpAsNormal = lowerCaseName.find("normal") != std::string::npos;
 	mtl->invertNormalMapY = lowerCaseName.find("inverty") != std::string::npos;

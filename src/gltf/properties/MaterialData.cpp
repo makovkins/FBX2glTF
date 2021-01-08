@@ -53,15 +53,18 @@ MaterialData::MaterialData(
 	const float metallic,
 	const TextureData* roughnessTexture,
 	const float roughness,
+	const float roughnessMapMin,
+	const float roughnessMapMax,
 	const TextureData* occlusionTexture,
 	const TextureData* emissiveTexture,
 	const Vec3f& emissiveColor,
 	const TextureData* bumpTexture,
 	float bumpFactor,
-	const TextureData* opacityTexture) :
+	const TextureData* opacityTexture,
+	const TextureData* lightmapTexture) :
 	name(std::move(name)),
 	shadingModel(shadingModel),
-	alphaTest(alphaTest),
+	alphaTest(clamp(alphaTest)),
 	isDoubleSided(isDoubleSided),
 	diffuseTexture(Tex::ref(diffuseTexture)),
 	diffuseColor(diffuseColor),
@@ -70,12 +73,15 @@ MaterialData::MaterialData(
 	metallic(clamp(metallic)),
 	roughnessTexture(Tex::ref(roughnessTexture)),
 	roughness(clamp(roughness)),
+	roughnessMapMin(clamp(roughnessMapMin)),
+	roughnessMapMax(clamp(roughnessMapMax)),
 	occlusionTexture(Tex::ref(occlusionTexture)),
 	emissiveTexture(Tex::ref(emissiveTexture)),
 	emissiveColor(clamp(emissiveColor)),
 	bumpTexture(Tex::ref(bumpTexture)),
 	bumpFactor(bumpFactor),
-	opacityTexture(Tex::ref(opacityTexture))
+	opacityTexture(Tex::ref(opacityTexture)),
+	lightmapTexture(Tex::ref(lightmapTexture))
 {
 }
 
@@ -83,57 +89,75 @@ json MaterialData::serialize() const
 {
 	json result = {
 		{"name", name},
-		{"shadingModel", Describe(shadingModel)},
-		{
+		{"shadingModel", Describe(shadingModel)}
+/*		{
 			"extras",
 			{
+				"fromFBX",
 				{
-					"fromFBX",
+					"userProperties",
 					{
 					}
 				}
 			}
-		}
+		}*/
 	};
 
-	result["alphaTest"] = alphaTest;
-	result["doubleSided"] = isDoubleSided;
+	if (alphaTest > 0)
+		result["alphaTest"] = alphaTest;
+
+	if (isDoubleSided)
+		result["doubleSided"] = isDoubleSided;
 
 	if (diffuseTexture != nullptr)
 		result["diffuseTexture"] = *diffuseTexture;
+
 	result["diffuseColor"] = toStdVec(diffuseColor);
 
 	if (diffuseTexture != nullptr)
 		result["diffuseTexture"] = *diffuseTexture;
 
-	if (normalTexture != nullptr)
-		result["normalTexture"] = *normalTexture;
-
-	if (metallicTexture != nullptr)
-		result["metallicTexture"] = *metallicTexture;
-	if (metallic != 1.0f)
-		result["metallic"] = metallic;
-
-	if (roughnessTexture != nullptr)
-		result["roughnessTexture"] = *roughnessTexture;
-	if (roughness != 1.0f)
-		result["roughness"] = roughness;
-
-	if (occlusionTexture != nullptr)
-		result["occlusionTexture"] = *occlusionTexture;
-
 	if (emissiveTexture != nullptr)
 		result["emissiveTexture"] = *emissiveTexture;
 	result["emissiveColor"] = toStdVec(emissiveColor);
 
-	if (bumpTexture != nullptr)
-		result["bumpTexture"] = *bumpTexture;
-	if (bumpFactor != 1.0f)
-		result["bumpFactor"] = bumpFactor;
-
 	if (opacityTexture != nullptr)
 		result["opacityTexture"] = *opacityTexture;
 
+	if (shadingModel != RAW_SHADING_MODEL_UNLIT)
+	{
+		if (normalTexture != nullptr)
+			result["normalTexture"] = *normalTexture;
+
+		if (metallicTexture != nullptr)
+			result["metallicTexture"] = *metallicTexture;
+		if (metallic > 0)
+			result["metallic"] = metallic;
+
+		if (roughnessTexture != nullptr)
+			result["roughnessTexture"] = *roughnessTexture;
+
+		if (roughness < 1.0f)
+			result["roughness"] = roughness;
+		if (roughnessMapMin > 0 || roughnessMapMax < 1)
+		{
+			result["roughnessMapMin"] = roughnessMapMin;
+			result["roughnessMapMax"] = roughnessMapMax;
+		}
+
+		if (occlusionTexture != nullptr)
+			result["occlusionTexture"] = *occlusionTexture;
+
+		if (bumpTexture != nullptr)
+			result["bumpTexture"] = *bumpTexture;
+		if (bumpFactor != 1.0f)
+			result["bumpFactor"] = bumpFactor;
+
+		if (lightmapTexture != nullptr)
+			result["lightmapTexture"] = *lightmapTexture;
+	}
+
+/*
 	for (const auto& i : userProperties)
 	{
 		auto& prop_map = result["extras"]["fromFBX"]["userProperties"];
@@ -144,6 +168,6 @@ json MaterialData::serialize() const
 			prop_map[k.key()] = k.value();
 		}
 	}
-
+*/
 	return result;
 }

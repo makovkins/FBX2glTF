@@ -72,10 +72,8 @@ struct FbxVRayMaterialInfo : FbxMaterialInfo
 class FbxVRayMaterialResolver : FbxMaterialResolver<FbxVRayMaterialInfo>
 {
 public:
-	FbxVRayMaterialResolver(
-		FbxSurfaceMaterial* fbxMaterial,
-		const std::map<const FbxTexture*, FbxString>& textureLocations)
-		: FbxMaterialResolver(fbxMaterial, textureLocations)
+	FbxVRayMaterialResolver(FbxSurfaceMaterial* fbxMaterial)
+		: FbxMaterialResolver(fbxMaterial)
 	{
 	}
 

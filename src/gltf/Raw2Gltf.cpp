@@ -268,6 +268,7 @@ ModelData* Raw2Gltf(
 			TextureData* opacityTexture = simpleTex(RAW_TEXTURE_USAGE_OPACITY).get();
 			TextureData* emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
 			TextureData* occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
+			TextureData* lightmapTexture = simpleTex(RAW_TEXTURE_USAGE_LIGHTMAP).get();
 
 
 			if (material.info->shadingModel == RAW_SHADING_MODEL_VRAY)
@@ -280,18 +281,51 @@ ModelData* Raw2Gltf(
 					rawMtl->alphaTest,
 					rawMtl->isDoubleSided,
 					diffuseTexture,
-					Vec4f(rawMtl->diffuseColor.x, rawMtl->diffuseColor.y, rawMtl->diffuseColor.z, rawMtl->refractionColor.x),
+					Vec4f(rawMtl->diffuseColor.x, rawMtl->diffuseColor.y, rawMtl->diffuseColor.z, 1.0f - rawMtl->refractionColor.x),
 					normalTexture,
 					metallicTexture,
 					rawMtl->metalness,
 					roughnessTexture,
 					rawMtl->roughness,
+					rawMtl->roughnessMapMin,
+					rawMtl->roughnessMapMax,
 					occlusionTexture,
 					emissiveTexture,
 					rawMtl->selfIlluminationColor,
 					bumpTexture,
 					rawMtl->bumpMultiplier,
-					opacityTexture));
+					opacityTexture,
+					lightmapTexture));
+
+				materialsById[material.id] = mData;
+
+				if (options.enableUserProperties)
+					mData->userProperties = material.userProperties;
+			}
+			else if (material.info->shadingModel == RAW_SHADING_MODEL_UNLIT)
+			{
+				const RawUnlitMatProps* rawMtl = (RawUnlitMatProps*)material.info.get();
+
+				std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
+					material.name,
+					material.info->shadingModel,
+					rawMtl->alphaTest,
+					rawMtl->isDoubleSided,
+					diffuseTexture,
+					rawMtl->diffuseColor,
+					nullptr,
+					nullptr,
+					0.0f,
+					nullptr,
+					1.0f,
+					0.0f, 1.0f,
+					nullptr,
+					emissiveTexture,
+					rawMtl->selfIlluminationColor,
+					nullptr,
+					1.0f,
+					opacityTexture,
+					nullptr));
 
 				materialsById[material.id] = mData;
 
@@ -338,12 +372,14 @@ ModelData* Raw2Gltf(
 					metallic,
 					roughnessTexture,
 					roughness,
+					0.0f, 1.0f,
 					occlusionTexture,
 					emissiveTexture,
 					emissiveColor,
 					bumpTexture,
 					bumpFactor,
-					opacityTexture));
+					opacityTexture,
+					lightmapTexture));
 
 				materialsById[material.id] = mData;
 

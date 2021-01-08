@@ -45,8 +45,7 @@ static bool TriangleTexturePolarity(const Vec2f& uv0, const Vec2f& uv1, const Ve
 static void ReadMesh(
 	RawModel& raw,
 	FbxScene* pScene,
-	FbxNode* pNode,
-	const std::map<const FbxTexture*, FbxString>& textureLocations)
+	FbxNode* pNode)
 {
 	FbxGeometryConverter meshConverter(pScene->GetFbxManager());
 	meshConverter.Triangulate(pNode->GetNodeAttribute(), true);
@@ -92,7 +91,7 @@ static void ReadMesh(
 		pMesh->GetElementUV(1),
 		pMesh->GetElementUVCount());
 	const FbxSkinningAccess skinning(pMesh, pScene, pNode);
-	const FbxMaterialsAccess materials(pMesh, textureLocations);
+	const FbxMaterialsAccess materials(pMesh);
 	const FbxBlendShapesAccess blendShapes(pMesh);
 
 	if (verboseOutput)
@@ -125,29 +124,23 @@ static void ReadMesh(
 
 	raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_POSITION);
 	if (normalLayer.LayerPresent())
-	{
 		raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_NORMAL);
-	}
+
 	if (tangentLayer.LayerPresent())
-	{
 		raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_TANGENT);
-	}
+
 	if (binormalLayer.LayerPresent())
-	{
 		raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_BINORMAL);
-	}
+
 	if (colorLayer.LayerPresent())
-	{
 		raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_COLOR);
-	}
+
 	if (uvLayer0.LayerPresent())
-	{
 		raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_UV0);
-	}
+
 	if (uvLayer1.LayerPresent())
-	{
 		raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_UV1);
-	}
+
 	if (skinning.IsSkinned())
 	{
 		raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS);
@@ -168,8 +161,7 @@ static void ReadMesh(
 
 		rawSurface.jointIds.emplace_back(jointId);
 		rawSurface.inverseBindMatrices.push_back(
-			invScaleMatrix * toMat4f(skinning.GetInverseBindMatrix(jointIndex)) *
-			scaleMatrix);
+			invScaleMatrix * toMat4f(skinning.GetInverseBindMatrix(jointIndex)) * scaleMatrix);
 		rawSurface.jointGeometryMins.emplace_back(FLT_MAX, FLT_MAX, FLT_MAX);
 		rawSurface.jointGeometryMaxs.emplace_back(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 	}
@@ -180,9 +172,9 @@ static void ReadMesh(
 	{
 		for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(channelIx); targetIx++)
 		{
-			const FbxBlendShapesAccess::TargetShape& shape =
-				blendShapes.GetTargetShape(channelIx, targetIx);
+			const FbxBlendShapesAccess::TargetShape& shape = blendShapes.GetTargetShape(channelIx, targetIx);
 			targetShapes.push_back(&shape);
+
 			auto& blendChannel = blendShapes.GetBlendChannel(channelIx);
 
 			rawSurface.blendChannels.push_back(
@@ -204,8 +196,6 @@ static void ReadMesh(
 
 		int textures[RAW_TEXTURE_USAGE_MAX];
 		std::fill_n(textures, (int)RAW_TEXTURE_USAGE_MAX, -1);
-
-		float materialOpacity = 1.0;
 
 		std::shared_ptr<RawMatProps> rawMatProps;
 		FbxString materialName;
@@ -235,11 +225,7 @@ static void ReadMesh(
 			const auto maybeAddTexture = [&](const FbxFileTexture* tex, RawTextureUsage usage)
 			{
 				if (tex != nullptr)
-				{
-					// dig out the inferred filename from the textureLocations map
-					FbxString inferredPath = textureLocations.find(tex)->second;
-					textures[usage] = raw.AddTexture(tex->GetName(), tex->GetFileName(), inferredPath.Buffer(), usage);
-				}
+					textures[usage] = raw.AddTexture(tex->GetName(), tex->GetFileName(), tex->GetFileName(), usage);
 			};
 
 			std::shared_ptr<RawMatProps> matInfo;
@@ -252,26 +238,40 @@ static void ReadMesh(
 
 				maybeAddTexture(fbxMatInfo->diffuseTexture, RAW_TEXTURE_USAGE_DIFFUSE);
 				maybeAddTexture(fbxMatInfo->bumpTexture, fbxMatInfo->useBumpAsNormal ? RAW_TEXTURE_USAGE_NORMAL : RAW_TEXTURE_USAGE_BUMP);
-				maybeAddTexture(fbxMatInfo->selfIlluminationTexture, RAW_TEXTURE_USAGE_EMISSIVE);
+				maybeAddTexture(fbxMatInfo->selfIlluminationTexture, fbxMatInfo->useSelfIlluminationAsLightmap ? RAW_TEXTURE_USAGE_LIGHTMAP : RAW_TEXTURE_USAGE_EMISSIVE);
 				maybeAddTexture(fbxMatInfo->roughnessTexture, RAW_TEXTURE_USAGE_ROUGHNESS);
 				maybeAddTexture(fbxMatInfo->metalnessTexture, RAW_TEXTURE_USAGE_METALLIC);
 				maybeAddTexture(fbxMatInfo->opacityTexture, RAW_TEXTURE_USAGE_OPACITY);
 
-				rawMatProps.reset(
-					new RawVRayMatProps(
-						shadingModel,
-						fbxMatInfo->alphaTest,
-						fbxMatInfo->doubleSided,
-						toVec3f(fbxMatInfo->diffuseColor),
-						toVec3f(fbxMatInfo->reflectionColor),
-						(float)fbxMatInfo->roughness,
-						(float)fbxMatInfo->metalness,
-						toVec3f(fbxMatInfo->refractionColor),
-						toVec3f(fbxMatInfo->selfIlluminationColor),
-						(float)fbxMatInfo->selfIlluminationMultiplier,
-						(float)fbxMatInfo->bumpMultiplier));
-
-				materialOpacity = (float)fbxMatInfo->refractionColor[3];
+				if (shadingModel == RAW_SHADING_MODEL_VRAY)
+				{
+					rawMatProps.reset(
+						new RawVRayMatProps(
+							shadingModel,
+							fbxMatInfo->alphaTest,
+							fbxMatInfo->doubleSided,
+							toVec3f(fbxMatInfo->diffuseColor),
+							toVec3f(fbxMatInfo->reflectionColor),
+							(float)fbxMatInfo->roughness,
+							(float)fbxMatInfo->roughnessMapMin,
+							(float)fbxMatInfo->roughnessMapMax,
+							(float)fbxMatInfo->metalness,
+							toVec3f(fbxMatInfo->refractionColor),
+							toVec3f(fbxMatInfo->selfIlluminationColor),
+							(float)fbxMatInfo->selfIlluminationMultiplier,
+							(float)fbxMatInfo->bumpMultiplier));
+				}
+				else
+				{
+					rawMatProps.reset(
+						new RawUnlitMatProps(
+							shadingModel,
+							fbxMatInfo->alphaTest,
+							fbxMatInfo->doubleSided,
+							Vec4f((float)fbxMatInfo->diffuseColor[0], (float)fbxMatInfo->diffuseColor[1], (float)fbxMatInfo->diffuseColor[2], 1.0f - (float)fbxMatInfo->refractionColor[0]),
+							toVec3f(fbxMatInfo->selfIlluminationColor),
+							(float)fbxMatInfo->selfIlluminationMultiplier));
+				}
 			}
 			else
 			{
@@ -294,30 +294,40 @@ static void ReadMesh(
 				maybeAddTexture(fbxMatInfo->texDiffuse, RAW_TEXTURE_USAGE_DIFFUSE);
 				maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
 				maybeAddTexture(fbxMatInfo->texBump, RAW_TEXTURE_USAGE_BUMP);
-				maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
+				maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_LIGHTMAP);  // Emissive texture is always used as lightmap
 				maybeAddTexture(fbxMatInfo->texShininess, RAW_TEXTURE_USAGE_SHININESS);
 				maybeAddTexture(fbxMatInfo->texSpecular, RAW_TEXTURE_USAGE_SPECULAR);
 				maybeAddTexture(fbxMatInfo->texOpacity, RAW_TEXTURE_USAGE_OPACITY);
-				rawMatProps.reset(
-					new RawTraditionalMatProps(
-						shadingModel,
-						alphaTest,
-						isDoubleSided,
-						toVec4f(fbxMatInfo->colDiffuse),
-						toVec3f(fbxMatInfo->colEmissive),
-						toVec3f(fbxMatInfo->colSpecular),
-						(float)fbxMatInfo->specularFactor,
-						(float)fbxMatInfo->shininess,
-						(float)fbxMatInfo->bumpFactor));
-				materialOpacity = (float)fbxMatInfo->colDiffuse[3];
+
+				if (shadingModel == RAW_SHADING_MODEL_STANDARD)
+				{
+					rawMatProps.reset(
+						new RawTraditionalMatProps(
+							shadingModel,
+							alphaTest,
+							isDoubleSided,
+							toVec4f(fbxMatInfo->colDiffuse),
+							toVec3f(fbxMatInfo->colEmissive),
+							toVec3f(fbxMatInfo->colSpecular),
+							(float)fbxMatInfo->specularFactor,
+							(float)fbxMatInfo->shininess,
+							(float)fbxMatInfo->bumpFactor));
+				}
+				else
+				{
+					rawMatProps.reset(
+						new RawUnlitMatProps(
+							shadingModel,
+							alphaTest,
+							isDoubleSided,
+							toVec4f(fbxMatInfo->colDiffuse),
+							toVec3f(fbxMatInfo->colEmissive),
+							1.0));
+				}
 			}
 		}
 
 		RawVertex rawVertices[3];
-		bool vertexTransparency = false;
-
-		if (materialOpacity < 1)
-			vertexTransparency = true;
 
 		for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++, polygonVertexIndex++)
 		{
@@ -389,7 +399,7 @@ static void ReadMesh(
 			vertex.polarityUv0 = false;
 
 			// Flag this triangle as transparent if any of its corner vertices substantially deviates from fully opaque.
-			vertexTransparency |= colorLayer.LayerPresent() && (fabs(fbxColor.mAlpha - 1.0) > 1e-3);
+			//vertexTransparency |= colorLayer.LayerPresent() && (fabs(fbxColor.mAlpha - 1.0) > 1e-3);
 
 			rawSurface.bounds.AddPoint(vertex.position);
 
@@ -655,8 +665,7 @@ static void ReadNodeProperty(RawModel& raw, FbxNode* pNode, FbxProperty& prop)
 static void ReadNodeAttributes(
 	RawModel& raw,
 	FbxScene* pScene,
-	FbxNode* pNode,
-	const std::map<const FbxTexture*, FbxString>& textureLocations)
+	FbxNode* pNode)
 {
 	if (!pNode->GetVisibility())
 	{
@@ -687,7 +696,7 @@ static void ReadNodeAttributes(
 		case FbxNodeAttribute::eTrimNurbsSurface:
 		case FbxNodeAttribute::ePatch:
 			{
-				ReadMesh(raw, pScene, pNode, textureLocations);
+				ReadMesh(raw, pScene, pNode);
 				break;
 			}
 		case FbxNodeAttribute::eCamera:
@@ -721,7 +730,7 @@ static void ReadNodeAttributes(
 
 	for (int child = 0; child < pNode->GetChildCount(); child++)
 	{
-		ReadNodeAttributes(raw, pScene, pNode->GetChild(child), textureLocations);
+		ReadNodeAttributes(raw, pScene, pNode->GetChild(child));
 	}
 }
 
@@ -1172,70 +1181,6 @@ static std::string FindFbxTexture(
 	return "";
 }
 
-/*
-    The texture file names inside of the FBX often contain some long author-specific
-    path with the wrong extensions. For instance, all of the art assets may be PSD
-    files in the FBX metadata, but in practice they are delivered as TGA or PNG files.
-
-    This function takes a texture file name stored in the FBX, which may be an absolute
-    path on the author's computer such as "C:\MyProject\TextureName.psd", and matches
-    it to a list of existing texture files in the same directory as the FBX file.
-*/
-static void FindFbxTextures(
-	FbxScene* pScene,
-	const std::string& fbxFileName,
-	const std::set<std::string>& extensions,
-	std::map<const FbxTexture*, FbxString>& textureLocations)
-{
-	// figure out what folder the FBX file is in,
-	const auto& fbxFolder = FileUtils::getFolder(fbxFileName);
-	std::vector<std::string> folders{
-		// first search filename.fbm folder which the SDK itself expands embedded textures into,
-		fbxFolder + "/" + FileUtils::GetFileBase(fbxFileName) + ".fbm", // filename.fbm
-		// then the FBX folder itself,
-		fbxFolder,
-		// then finally our working directory
-		FileUtils::GetCurrentFolder(),
-	};
-
-	// List the contents of each of these folders (if they exist)
-	std::vector<std::vector<std::string>> folderContents;
-	for (const auto& folder : folders)
-	{
-		if (FileUtils::FolderExists(folder))
-		{
-			folderContents.push_back(FileUtils::ListFolderFiles(folder, extensions));
-		}
-		else
-		{
-			folderContents.push_back({});
-		}
-	}
-
-	// Try to match the FBX texture names with the actual files on disk.
-	for (int i = 0; i < pScene->GetTextureCount(); i++)
-	{
-		const FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pScene->GetTexture(i));
-		if (pFileTexture != nullptr)
-		{
-			const std::string fileLocation =
-				FindFbxTexture(pFileTexture->GetFileName(), folders, folderContents);
-			// always extend the mapping (even for files we didn't find)
-			textureLocations.emplace(pFileTexture, fileLocation.c_str());
-			if (fileLocation.empty())
-			{
-				fmt::printf(
-					"Warning: could not find a image file for texture: %s.\n",
-					pFileTexture->GetName());
-			}
-			else if (verboseOutput)
-			{
-				fmt::printf("Found texture '%s' at: %s\n", pFileTexture->GetName(), fileLocation);
-			}
-		}
-	}
-}
-
 bool LoadFBXFile(
 	RawModel& raw,
 	const std::string fbxFileName,
@@ -1270,9 +1215,6 @@ bool LoadFBXFile(
 		return false;
 	}
 
-	std::map<const FbxTexture*, FbxString> textureLocations;
-	FindFbxTextures(pScene, fbxFileName, textureExtensions, textureLocations);
-
 	// Use Y up for glTF
 	FbxAxisSystem::MayaYUp.ConvertScene(pScene);
 
@@ -1290,7 +1232,7 @@ bool LoadFBXFile(
 	scaleFactor = options.scaleFactor;
 
 	ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
-	ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
+	ReadNodeAttributes(raw, pScene, pScene->GetRootNode());
 	ReadAnimations(raw, pScene, options);
 
 	pScene->Destroy();

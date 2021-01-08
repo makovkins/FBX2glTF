@@ -29,18 +29,21 @@ struct MaterialData : Holdable
 		float alphaTest,
 		bool isDoubleSided,
 		const TextureData* diffuseTexture,
-		const Vec4f diffuseColor,
+		Vec4f diffuseColor,
 		const TextureData* normalTexture,
 		const TextureData* metallicTexture,
-		const float metallic,
+		float metallic,
 		const TextureData* roughnessTexture,
-		const float roughness,
+		float roughness,
+		float roughnessMapMin,
+		float roughnessMapMax,
 		const TextureData* occlusionTexture,
 		const TextureData* emissiveTexture,
 		const Vec3f& emissiveColor,
 		const TextureData* bumpTexture,
 		float bumpFactor,
-		const TextureData* opacityTexture);
+		const TextureData* opacityTexture,
+		const TextureData* lightmapTexture);
 
 	json serialize() const override;
 
@@ -55,12 +58,15 @@ struct MaterialData : Holdable
 	const float metallic;
 	const std::unique_ptr<const Tex> roughnessTexture;
 	const float roughness;
+	const float roughnessMapMin;
+	const float roughnessMapMax;
 	const std::unique_ptr<const Tex> occlusionTexture;
 	const std::unique_ptr<const Tex> emissiveTexture;
 	const Vec3f emissiveColor;
 	const std::unique_ptr<const Tex> bumpTexture;
 	const float bumpFactor;
 	const std::unique_ptr<const Tex> opacityTexture;
+	const std::unique_ptr<const Tex> lightmapTexture;
 
 	std::vector<std::string> userProperties;
 };
