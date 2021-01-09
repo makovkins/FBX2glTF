@@ -263,7 +263,7 @@ ModelData* Raw2Gltf(
 			TextureData* diffuseTexture = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE).get();
 			TextureData* normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
 			TextureData* bumpTexture = simpleTex(RAW_TEXTURE_USAGE_BUMP).get();
-			TextureData* roughnessTexture = simpleTex(RAW_TEXTURE_USAGE_SHININESS).get();
+			TextureData* roughnessTexture = simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS).get();
 			TextureData* metallicTexture = simpleTex(RAW_TEXTURE_USAGE_SPECULAR).get();
 			TextureData* opacityTexture = simpleTex(RAW_TEXTURE_USAGE_OPACITY).get();
 			TextureData* emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
@@ -280,6 +280,9 @@ ModelData* Raw2Gltf(
 					material.info->shadingModel,
 					rawMtl->alphaTest,
 					rawMtl->isDoubleSided,
+					rawMtl->uvTranslation,
+					rawMtl->uvScale,
+					rawMtl->uvRotation,
 					diffuseTexture,
 					Vec4f(rawMtl->diffuseColor.x, rawMtl->diffuseColor.y, rawMtl->diffuseColor.z, 1.0f - rawMtl->refractionColor.x),
 					rawMtl->reflectionColor,
@@ -313,6 +316,7 @@ ModelData* Raw2Gltf(
 					material.info->shadingModel,
 					rawMtl->alphaTest,
 					rawMtl->isDoubleSided,
+					Vec2f(0,0), Vec2f(1, 1), 0,
 					diffuseTexture,
 					rawMtl->diffuseColor,
 					Vec3f(0, 0, 0),
@@ -369,6 +373,7 @@ ModelData* Raw2Gltf(
 					material.info->shadingModel,
 					rawMtl->alphaTest,
 					rawMtl->isDoubleSided,
+					Vec2f(0, 0), Vec2f(1, 1), 0,
 					diffuseTexture,
 					diffuseColor,
 					Vec3f(0, 0, 0),

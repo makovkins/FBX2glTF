@@ -21,6 +21,16 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 		return nullptr;
 	};
 
+	auto getTextureTransform = [](const FbxFileTexture* texture, FbxVector2& outScale, FbxVector2& outTranslation, float& outRotation)
+	{
+		if (texture)
+		{
+			outScale = FbxVector2(texture->GetScaleU(), texture->GetScaleV());
+			outTranslation = FbxVector2(texture->GetTranslationU(), texture->GetTranslationV());
+			outRotation = (float)texture->GetRotationW();
+		}
+	};
+
 	const FbxProperty topProp = fbxMaterial->FindProperty("3dsMax", false);
 	if (topProp.GetPropertyDataType() != FbxCompoundDT)
 		return nullptr;
@@ -77,15 +87,32 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 	const FbxProperty diffuseTextureProp = mapsProp.Find("texmap_diffuse");
 	mtl->diffuseTexture = getTexture(diffuseTextureProp);
 
-	//
-	// Metalness
-	//
-	const FbxProperty metalnessProp = basicProp.Find("reflection_metalness");
-	if (metalnessProp.IsValid())
-		mtl->metalness = metalnessProp.Get<FbxDouble>();
+	bool uvTransformIsSet = false;
+	if (mtl->diffuseTexture)
+	{
+		getTextureTransform(mtl->diffuseTexture, mtl->uvScale, mtl->uvTranslation, mtl->uvRotation);
+		uvTransformIsSet = true;
+	}
 
-	const FbxProperty metalnessTextureProp = mapsProp.Find("texmap_metalness");
-	mtl->metalnessTexture = getTexture(metalnessTextureProp);
+	//
+	// Bump
+	//
+	const FbxProperty bumpTextureProp = mapsProp.Find("texmap_bump");
+	mtl->bumpTexture = getTexture(bumpTextureProp);
+
+	const FbxProperty bumpTextureMultiplierProp = mapsProp.Find("texmap_bump_multiplier");
+	if (bumpTextureMultiplierProp.IsValid())
+		mtl->bumpMultiplier = bumpTextureMultiplierProp.Get<FbxDouble>() / 100.0;
+
+	if (mtl->bumpTexture)
+	{
+		std::string bumpBitmapName = mtl->bumpTexture->GetMediaName().Lower();
+		mtl->useBumpAsNormal = bumpBitmapName.find("normal") != std::string::npos;
+		mtl->invertNormalMapY = bumpBitmapName.find("inverty") != std::string::npos;
+
+		if (!uvTransformIsSet)
+			getTextureTransform(mtl->bumpTexture, mtl->uvScale, mtl->uvTranslation, mtl->uvRotation);
+	}
 
 	//
 	// Reflection
@@ -110,6 +137,8 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 
 	const FbxProperty reflectionGlossinessTextureProp = mapsProp.Find("texmap_reflectionGlossiness");
 	mtl->roughnessTexture = getTexture(reflectionGlossinessTextureProp);
+	if (!uvTransformIsSet && mtl->roughnessTexture)
+		getTextureTransform(mtl->roughnessTexture, mtl->uvScale, mtl->uvTranslation, mtl->uvRotation);
 
 	const FbxProperty glossinessMapMin = fbxMaterial->FindProperty("GlossinessMapMin");
 	const FbxProperty glossinessMapMax = fbxMaterial->FindProperty("GlossinessMapMax");
@@ -133,21 +162,17 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 	}
 
 	//
-	// Bump
+	// Metalness
 	//
-	const FbxProperty bumpTextureProp = mapsProp.Find("texmap_bump");
-	mtl->bumpTexture = getTexture(bumpTextureProp);
+	const FbxProperty metalnessProp = basicProp.Find("reflection_metalness");
+	if (metalnessProp.IsValid())
+		mtl->metalness = metalnessProp.Get<FbxDouble>();
 
-	const FbxProperty bumpTextureMultiplierProp = mapsProp.Find("texmap_bump_multiplier");
-	if (bumpTextureMultiplierProp.IsValid())
-		mtl->bumpMultiplier = bumpTextureMultiplierProp.Get<FbxDouble>() / 100.0;
+	const FbxProperty metalnessTextureProp = mapsProp.Find("texmap_metalness");
+	mtl->metalnessTexture = getTexture(metalnessTextureProp);
 
-	if (mtl->bumpTexture)
-	{
-		std::string bumpBitmapName = mtl->bumpTexture->GetMediaName().Lower();
-		mtl->useBumpAsNormal = bumpBitmapName.find("normal") != std::string::npos;
-		mtl->invertNormalMapY = bumpBitmapName.find("inverty") != std::string::npos;
-	}
+	if (!uvTransformIsSet && mtl->metalnessTexture)
+		getTextureTransform(mtl->metalnessTexture, mtl->uvScale, mtl->uvTranslation, mtl->uvRotation);
 
 	//
 	// Self-illumination
@@ -172,6 +197,9 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 
 	const FbxProperty opacityTextureProp = mapsProp.Find("texmap_opacity");
 	mtl->opacityTexture = getTexture(opacityTextureProp);
+
+	if (!uvTransformIsSet && mtl->opacityTexture)
+		getTextureTransform(mtl->opacityTexture, mtl->uvScale, mtl->uvTranslation, mtl->uvRotation);
 
 
 	return mtl;

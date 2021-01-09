@@ -46,6 +46,9 @@ MaterialData::MaterialData(
 	RawShadingModel shadingModel,
 	float alphaTest,
 	bool isDoubleSided,
+	const Vec2f& uvTranslation,
+	const Vec2f& uvScale,
+	float uvRotation,
 	const TextureData* diffuseTexture,
 	const Vec4f diffuseColor,
 	const Vec3f specularColor,
@@ -68,6 +71,9 @@ MaterialData::MaterialData(
 	shadingModel(shadingModel),
 	alphaTest(clamp(alphaTest)),
 	isDoubleSided(isDoubleSided),
+	uvTranslation(uvTranslation),
+	uvScale(uvScale),
+	uvRotation(uvRotation),
 	diffuseTexture(Tex::ref(diffuseTexture)),
 	diffuseColor(diffuseColor),
 	specularColor(specularColor),
@@ -115,6 +121,13 @@ json MaterialData::serialize() const
 
 	if (diffuseTexture != nullptr)
 		result["diffuseTexture"] = *diffuseTexture;
+
+	if (uvTranslation != Vec2f(0,0))
+		result["uvTranslation"] = toStdVec(uvTranslation);
+	if (uvScale != Vec2f(1, 1))
+		result["uvScale"] = toStdVec(uvScale);
+	if (uvRotation != 0)
+		result["uvRotation"] = uvRotation;
 
 	result["diffuseColor"] = toStdVec(diffuseColor);
 	result["specularColor"] = toStdVec(specularColor);

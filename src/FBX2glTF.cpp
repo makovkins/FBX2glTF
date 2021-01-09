@@ -160,12 +160,6 @@ int main(int argc, char* argv[])
 	const auto opt_no_flip_v = app.add_flag("--no-flip-v", "Don't flip V texture coordinates.");
 
 	app.add_flag(
-		   "--pbr-metallic-roughness",
-		   gltfOptions.usePBRMetRough,
-		   "Try to glean glTF 2.0 native PBR attributes from the FBX.")
-	   ->group("Materials");
-
-	app.add_flag(
 		   "--khr-materials-unlit",
 		   gltfOptions.useKHRMatUnlit,
 		   "Use KHR_materials_unlit extension to request an unlit shader.")
@@ -175,11 +169,6 @@ int main(int argc, char* argv[])
 		"--no-khr-lights-punctual",
 		[&](size_t count) { gltfOptions.useKHRLightsPunctual = (count == 0); },
 		"Don't use KHR_lights_punctual extension to export FBX lights.");
-
-	app.add_flag(
-		"--user-properties",
-		gltfOptions.enableUserProperties,
-		"Transcribe FBX User Properties into glTF node and material 'extras'.");
 
 	app.add_flag(
 		"--blend-shape-normals",
@@ -298,7 +287,7 @@ int main(int argc, char* argv[])
 	CLI11_PARSE(app, argc, argv);
 
 	bool do_flip_u = false;
-	bool do_flip_v = true;
+	bool do_flip_v = false;
 	// somewhat tedious way to resolve --flag vs --no-flag in order provided
 	for (const auto opt : app.parse_order())
 	{
@@ -337,15 +326,6 @@ int main(int argc, char* argv[])
 	{
 		fmt::printf("You must supply a FBX file to convert.\n");
 		exit(1);
-	}
-
-	if (!gltfOptions.useKHRMatUnlit && !gltfOptions.usePBRMetRough)
-	{
-		if (verboseOutput)
-		{
-			fmt::printf("Defaulting to --pbr-metallic-roughness material support.\n");
-		}
-		gltfOptions.usePBRMetRough = true;
 	}
 
 	if (gltfOptions.embedResources && gltfOptions.outputBinary)

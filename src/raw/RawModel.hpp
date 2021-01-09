@@ -177,11 +177,7 @@ enum RawTextureOcclusion { RAW_TEXTURE_OCCLUSION_OPAQUE, RAW_TEXTURE_OCCLUSION_T
 struct RawTexture
 {
 	std::string name; // logical name in FBX file
-	int width;
-	int height;
-	int mipLevels;
 	RawTextureUsage usage;
-	RawTextureOcclusion occlusion;
 	std::string fileName; // original filename in FBX file
 	std::string fileLocation; // inferred path in local filesystem, or ""
 };
@@ -265,18 +261,24 @@ struct RawVRayMatProps : RawMatProps
 		RawShadingModel shadingModel,
 		const float alphaTest,
 		const bool isDoubleSided,
-		const Vec3f&& diffuseColor,
-		const Vec3f&& reflectionColor,
+		const Vec2f& uvTranslation,
+		const Vec2f& uvScale,
+		const float uvRotation,
+		const Vec3f& diffuseColor,
+		const Vec3f& reflectionColor,
 		const float roughness,
 		const float roughnessMapMin,
 		const float roughnessMapMax,
 		const float metalness,
-		const Vec3f&& refractionColor,
-		const Vec3f&& selfIlluminationColor,
+		const Vec3f& refractionColor,
+		const Vec3f& selfIlluminationColor,
 		const float selfIlluminationMultiplier,
 		float bumpMultiplier,
 		bool invertNormalMapY)
 		: RawMatProps(shadingModel, alphaTest, isDoubleSided),
+		uvTranslation(uvTranslation),
+		uvScale(uvScale),
+		uvRotation(uvRotation),
 		diffuseColor(diffuseColor),
 		reflectionColor(reflectionColor),
 		roughness(roughness),
@@ -291,6 +293,9 @@ struct RawVRayMatProps : RawMatProps
 	{
 	}
 
+	const Vec2f uvTranslation;
+	const Vec2f uvScale;
+	const float uvRotation;
 	const Vec3f diffuseColor;
 	const Vec3f reflectionColor;
 	const float roughness;

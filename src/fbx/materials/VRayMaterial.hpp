@@ -18,6 +18,9 @@ struct FbxVRayMaterialInfo : FbxMaterialInfo
 		transparent(false),
 		doubleSided(false),
 		alphaTest(0),
+		uvTranslation(0,0),
+		uvScale(1,1),
+		uvRotation(0),
 		diffuseColor(1.0, 1.0, 1.0),
 		diffuseTexture(nullptr),
 		bumpTexture(nullptr),
@@ -42,6 +45,10 @@ struct FbxVRayMaterialInfo : FbxMaterialInfo
 	bool transparent;
 	bool doubleSided;
 	float alphaTest; // 0 if alpha test is disabled.
+
+	FbxVector2 uvTranslation;
+	FbxVector2 uvScale;
+	float uvRotation;
 
 	FbxVector4 diffuseColor;
 	FbxFileTexture* diffuseTexture;

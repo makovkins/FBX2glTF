@@ -110,21 +110,19 @@ struct GltfOptions
 	struct
 	{
 		bool enabled = false;
-		int compressionLevel = 7;
-		int quantBitsPosition = 14;
-		int quantBitsTexCoord = 10;
+		int compressionLevel = 8;
+		int quantBitsPosition = 16;
+		int quantBitsTexCoord = 16;
 		int quantBitsNormal = 10;
 		int quantBitsColor = 8;
 		int quantBitsGeneric = 8;
 	} draco;
 
 	/** Whether to include FBX User Properties as 'extras' metadata in glTF nodes. */
-	bool enableUserProperties{false};
+	bool enableUserProperties{true};
 
 	/** Whether to use KHR_materials_unlit to extend materials definitions. */
 	bool useKHRMatUnlit{false};
-	/** Whether to populate the pbrMetallicRoughness substruct in materials. */
-	bool usePBRMetRough{false};
 
 	/** Whether to include lights through the KHR_punctual_lights extension. */
 	bool useKHRLightsPunctual{true};

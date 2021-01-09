@@ -28,6 +28,9 @@ struct MaterialData : Holdable
 		RawShadingModel shadingModel,
 		float alphaTest,
 		bool isDoubleSided,
+		const Vec2f& uvTranslation,
+		const Vec2f& uvScale,
+		float uvRotation,
 		const TextureData* diffuseTexture,
 		Vec4f diffuseColor,
 		Vec3f specularColor,
@@ -53,6 +56,9 @@ struct MaterialData : Holdable
 	const RawShadingModel shadingModel;
 	const float alphaTest;
 	const bool isDoubleSided;
+	const Vec2f uvTranslation;
+	const Vec2f uvScale;
+	const float uvRotation;
 	const std::unique_ptr<const Tex> diffuseTexture;
 	const Vec4f diffuseColor;
 	const Vec3f specularColor;

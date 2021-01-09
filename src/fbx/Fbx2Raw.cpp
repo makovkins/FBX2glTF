@@ -251,6 +251,9 @@ static void ReadMesh(
 							shadingModel,
 							fbxMatInfo->alphaTest,
 							fbxMatInfo->doubleSided,
+							toVec2f(fbxMatInfo->uvTranslation),
+							toVec2f(fbxMatInfo->uvScale),
+							fbxMatInfo->uvRotation,
 							toVec3f(fbxMatInfo->diffuseColor),
 							toVec3f(fbxMatInfo->reflectionColor),
 							(float)fbxMatInfo->roughness,
@@ -297,7 +300,7 @@ static void ReadMesh(
 				maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
 				maybeAddTexture(fbxMatInfo->texBump, RAW_TEXTURE_USAGE_BUMP);
 				maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_LIGHTMAP);  // Emissive texture is always used as lightmap
-				maybeAddTexture(fbxMatInfo->texShininess, RAW_TEXTURE_USAGE_SHININESS);
+				maybeAddTexture(fbxMatInfo->texShininess, RAW_TEXTURE_USAGE_ROUGHNESS);
 				maybeAddTexture(fbxMatInfo->texSpecular, RAW_TEXTURE_USAGE_SPECULAR);
 				maybeAddTexture(fbxMatInfo->texOpacity, RAW_TEXTURE_USAGE_OPACITY);
 

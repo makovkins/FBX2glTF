@@ -114,9 +114,8 @@ int RawModel::AddTexture(
 	RawTextureUsage usage)
 {
 	if (name.empty())
-	{
 		return -1;
-	}
+
 	for (size_t i = 0; i < textures.size(); i++)
 	{
 		// we allocate the struct even if the implementing image file is missing
@@ -128,22 +127,17 @@ int RawModel::AddTexture(
 		}
 	}
 
-	const ImageUtils::ImageProperties properties = ImageUtils::GetImageProperties(
-		!fileLocation.empty() ? fileLocation.c_str() : fileName.c_str());
+//	const ImageUtils::ImageProperties properties = ImageUtils::GetImageProperties(
+//		!fileLocation.empty() ? fileLocation.c_str() : fileName.c_str());
 
 	RawTexture texture;
 	texture.name = name;
-	texture.width = properties.width;
-	texture.height = properties.height;
-	texture.mipLevels =
-		(int)ceilf(log2f(std::max((float)properties.width, (float)properties.height)));
 	texture.usage = usage;
-	texture.occlusion = (properties.occlusion == ImageUtils::IMAGE_TRANSPARENT)
-		                    ? RAW_TEXTURE_OCCLUSION_TRANSPARENT
-		                    : RAW_TEXTURE_OCCLUSION_OPAQUE;
 	texture.fileName = fileName;
 	texture.fileLocation = fileLocation;
+
 	textures.emplace_back(texture);
+
 	return (int)textures.size() - 1;
 }
 
@@ -522,13 +516,11 @@ struct TriangleModelSortNeg
 	static bool Compare(const RawTriangle& a, const RawTriangle& b)
 	{
 		if (a.materialIndex != b.materialIndex)
-		{
 			return a.materialIndex < b.materialIndex;
-		}
+
 		if (a.surfaceIndex != b.surfaceIndex)
-		{
 			return a.surfaceIndex < b.surfaceIndex;
-		}
+
 		return a.verts[0] > b.verts[0];
 	}
 };
@@ -542,72 +534,13 @@ void RawModel::CreateMaterialModels(
 	// Sort all triangles based on material first, then surface, then first vertex index.
 	std::vector<RawTriangle> sortedTriangles;
 
-	bool invertedTransparencySort = true;
-	if (invertedTransparencySort)
-	{
-		// Split the triangles into opaque and transparent triangles.
-		std::vector<RawTriangle> opaqueTriangles;
-		std::vector<RawTriangle> transparentTriangles;
-		for (const auto& triangle : triangles)
-		{
-			const int materialIndex = triangle.materialIndex;
-			if (materialIndex < 0)
-			{
-				opaqueTriangles.push_back(triangle);
-				continue;
-			}
-			const int textureIndex = materials[materialIndex].textures[RAW_TEXTURE_USAGE_DIFFUSE];
-			if (textureIndex < 0)
-			{
-				if (vertices[triangle.verts[0]].color.w < 1.0f ||
-					vertices[triangle.verts[1]].color.w < 1.0f ||
-					vertices[triangle.verts[2]].color.w < 1.0f)
-				{
-					transparentTriangles.push_back(triangle);
-					continue;
-				}
-				opaqueTriangles.push_back(triangle);
-				continue;
-			}
-			if (textures[textureIndex].occlusion == RAW_TEXTURE_OCCLUSION_TRANSPARENT)
-			{
-				transparentTriangles.push_back(triangle);
-			}
-			else
-			{
-				opaqueTriangles.push_back(triangle);
-			}
-		}
-
-		// Sort the opaque triangles.
-		std::sort(opaqueTriangles.begin(), opaqueTriangles.end(), TriangleModelSortPos::Compare);
-
-		// Sort the transparent triangles in the reverse direction.
-		std::sort(
-			transparentTriangles.begin(), transparentTriangles.end(), TriangleModelSortNeg::Compare);
-
-		// Add the triangles to the sorted list.
-		for (const auto& opaqueTriangle : opaqueTriangles)
-		{
-			sortedTriangles.push_back(opaqueTriangle);
-		}
-		for (const auto& transparentTriangle : transparentTriangles)
-		{
-			sortedTriangles.push_back(transparentTriangle);
-		}
-	}
-	else
-	{
-		sortedTriangles = triangles;
-		std::sort(sortedTriangles.begin(), sortedTriangles.end(), TriangleModelSortPos::Compare);
-	}
+	sortedTriangles = triangles;
+	std::sort(sortedTriangles.begin(), sortedTriangles.end(), TriangleModelSortPos::Compare);
 
 	// Overestimate the number of models that will be created to avoid massive reallocation.
 	int discreteCount = 0;
 	for (const auto& surface : surfaces)
-	{
 		discreteCount += surface.discrete ? 1 : 0;
-	}
 
 	materialModels.clear();
 	materialModels.reserve(materials.size() + discreteCount);
@@ -619,9 +552,7 @@ void RawModel::CreateMaterialModels(
 	for (size_t i = 0; i < sortedTriangles.size(); i++)
 	{
 		if (sortedTriangles[i].materialIndex < 0 || sortedTriangles[i].surfaceIndex < 0)
-		{
 			continue;
-		}
 
 		if (i == 0 || (shortIndices && model->GetVertexCount() >= 0xFFFE) ||
 			sortedTriangles[i].materialIndex != sortedTriangles[i - 1].materialIndex ||
