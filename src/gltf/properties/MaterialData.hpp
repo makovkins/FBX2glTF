@@ -30,7 +30,9 @@ struct MaterialData : Holdable
 		bool isDoubleSided,
 		const TextureData* diffuseTexture,
 		Vec4f diffuseColor,
+		Vec3f specularColor,
 		const TextureData* normalTexture,
+		bool invertNormalMapY,
 		const TextureData* metallicTexture,
 		float metallic,
 		const TextureData* roughnessTexture,
@@ -53,7 +55,9 @@ struct MaterialData : Holdable
 	const bool isDoubleSided;
 	const std::unique_ptr<const Tex> diffuseTexture;
 	const Vec4f diffuseColor;
+	const Vec3f specularColor;
 	const std::unique_ptr<const Tex> normalTexture;
+	const bool invertNormalMapY;
 	const std::unique_ptr<const Tex> metallicTexture;
 	const float metallic;
 	const std::unique_ptr<const Tex> roughnessTexture;

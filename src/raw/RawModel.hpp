@@ -223,14 +223,16 @@ struct RawTraditionalMatProps : RawMatProps
 		const Vec3f&& specularFactor,
 		const float specularLevel,
 		const float shininess,
-		float bumpFactor)
+		float bumpFactor,
+		bool invertNormalMapY)
 		: RawMatProps(shadingModel, alphaTest, isDoubleSided),
 		  diffuseFactor(diffuseFactor),
 		  emissiveFactor(emissiveFactor),
 		  specularFactor(specularFactor),
 		  specularLevel(specularLevel),
 		  shininess(shininess),
-		  bumpFactor(bumpFactor)
+		  bumpFactor(bumpFactor),
+		  invertNormalMapY(invertNormalMapY)
 	{
 	}
 
@@ -240,6 +242,7 @@ struct RawTraditionalMatProps : RawMatProps
 	const float specularLevel;
 	const float shininess;
 	const float bumpFactor;
+	const bool invertNormalMapY;
 
 	bool operator==(const RawMatProps& other) const override
 	{
@@ -249,7 +252,8 @@ struct RawTraditionalMatProps : RawMatProps
 			return diffuseFactor == typed.diffuseFactor &&
 				specularFactor == typed.specularFactor && emissiveFactor == typed.emissiveFactor &&
 				specularLevel == typed.specularLevel && shininess == typed.shininess &&
-				bumpFactor == typed.bumpFactor;
+				bumpFactor == typed.bumpFactor &&
+				invertNormalMapY == typed.invertNormalMapY;
 		}
 		return false;
 	}
@@ -270,7 +274,8 @@ struct RawVRayMatProps : RawMatProps
 		const Vec3f&& refractionColor,
 		const Vec3f&& selfIlluminationColor,
 		const float selfIlluminationMultiplier,
-		float bumpMultiplier)
+		float bumpMultiplier,
+		bool invertNormalMapY)
 		: RawMatProps(shadingModel, alphaTest, isDoubleSided),
 		diffuseColor(diffuseColor),
 		reflectionColor(reflectionColor),
@@ -281,7 +286,8 @@ struct RawVRayMatProps : RawMatProps
 		refractionColor(refractionColor),
 		selfIlluminationColor(selfIlluminationColor),
 		selfIlluminationMultiplier(selfIlluminationMultiplier),
-		bumpMultiplier(bumpMultiplier)
+		bumpMultiplier(bumpMultiplier),
+		invertNormalMapY(invertNormalMapY)
 	{
 	}
 
@@ -295,6 +301,7 @@ struct RawVRayMatProps : RawMatProps
 	const Vec3f selfIlluminationColor;
 	const float selfIlluminationMultiplier;
 	const float bumpMultiplier;
+	bool invertNormalMapY;
 
 	bool operator==(const RawMatProps& other) const override
 	{
@@ -310,7 +317,8 @@ struct RawVRayMatProps : RawMatProps
 				refractionColor == typed.refractionColor &&
 				selfIlluminationColor == typed.selfIlluminationColor &&
 				selfIlluminationMultiplier == typed.selfIlluminationMultiplier &&
-				bumpMultiplier == typed.bumpMultiplier;
+				bumpMultiplier == typed.bumpMultiplier &&
+				invertNormalMapY == typed.invertNormalMapY;
 		}
 		return false;
 	}

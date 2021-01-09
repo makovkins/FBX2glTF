@@ -48,7 +48,9 @@ MaterialData::MaterialData(
 	bool isDoubleSided,
 	const TextureData* diffuseTexture,
 	const Vec4f diffuseColor,
+	const Vec3f specularColor,
 	const TextureData* normalTexture,
+	bool invertNormalMapY,
 	const TextureData* metallicTexture,
 	const float metallic,
 	const TextureData* roughnessTexture,
@@ -68,7 +70,9 @@ MaterialData::MaterialData(
 	isDoubleSided(isDoubleSided),
 	diffuseTexture(Tex::ref(diffuseTexture)),
 	diffuseColor(diffuseColor),
+	specularColor(specularColor),
 	normalTexture(Tex::ref(normalTexture)),
+	invertNormalMapY(invertNormalMapY),
 	metallicTexture(Tex::ref(metallicTexture)),
 	metallic(clamp(metallic)),
 	roughnessTexture(Tex::ref(roughnessTexture)),
@@ -113,6 +117,7 @@ json MaterialData::serialize() const
 		result["diffuseTexture"] = *diffuseTexture;
 
 	result["diffuseColor"] = toStdVec(diffuseColor);
+	result["specularColor"] = toStdVec(specularColor);
 
 	if (diffuseTexture != nullptr)
 		result["diffuseTexture"] = *diffuseTexture;
@@ -128,6 +133,9 @@ json MaterialData::serialize() const
 	{
 		if (normalTexture != nullptr)
 			result["normalTexture"] = *normalTexture;
+
+		if (invertNormalMapY)
+			result["invertNormalMapY"] = invertNormalMapY;
 
 		if (metallicTexture != nullptr)
 			result["metallicTexture"] = *metallicTexture;

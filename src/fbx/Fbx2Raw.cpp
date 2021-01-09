@@ -215,7 +215,8 @@ static void ReadMesh(
 					Vec3f(0, 0, 0),
 					0.5,
 					0.5,
-					1.0));
+					1.0,
+					false));
 		}
 		else
 		{
@@ -259,7 +260,8 @@ static void ReadMesh(
 							toVec3f(fbxMatInfo->refractionColor),
 							toVec3f(fbxMatInfo->selfIlluminationColor),
 							(float)fbxMatInfo->selfIlluminationMultiplier,
-							(float)fbxMatInfo->bumpMultiplier));
+							(float)fbxMatInfo->bumpMultiplier,
+							fbxMatInfo->invertNormalMapY));
 				}
 				else
 				{
@@ -311,7 +313,8 @@ static void ReadMesh(
 							toVec3f(fbxMatInfo->colSpecular),
 							(float)fbxMatInfo->specularFactor,
 							(float)fbxMatInfo->shininess,
-							(float)fbxMatInfo->bumpFactor));
+							(float)fbxMatInfo->bumpFactor,
+							false));
 				}
 				else
 				{

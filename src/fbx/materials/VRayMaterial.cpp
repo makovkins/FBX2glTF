@@ -142,8 +142,12 @@ std::unique_ptr<FbxVRayMaterialInfo> FbxVRayMaterialResolver::Resolve() const
 	if (bumpTextureMultiplierProp.IsValid())
 		mtl->bumpMultiplier = bumpTextureMultiplierProp.Get<FbxDouble>() / 100.0;
 
-	mtl->useBumpAsNormal = lowerCaseName.find("normal") != std::string::npos;
-	mtl->invertNormalMapY = lowerCaseName.find("inverty") != std::string::npos;
+	if (mtl->bumpTexture)
+	{
+		std::string bumpBitmapName = mtl->bumpTexture->GetMediaName().Lower();
+		mtl->useBumpAsNormal = bumpBitmapName.find("normal") != std::string::npos;
+		mtl->invertNormalMapY = bumpBitmapName.find("inverty") != std::string::npos;
+	}
 
 	//
 	// Self-illumination
