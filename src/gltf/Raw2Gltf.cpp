@@ -311,13 +311,21 @@ ModelData* Raw2Gltf(
 			{
 				const RawUnlitMatProps* rawMtl = (RawUnlitMatProps*)material.info.get();
 
+				TextureData* usedTexture = nullptr;
+				if (emissiveTexture)
+					usedTexture = emissiveTexture;
+				else if (diffuseTexture)
+					usedTexture = diffuseTexture;
+				else if (lightmapTexture)
+					usedTexture = lightmapTexture;
+
 				std::shared_ptr<MaterialData> mData = gltf->materials.hold(new MaterialData(
 					material.name,
 					material.info->shadingModel,
 					rawMtl->alphaTest,
 					rawMtl->isDoubleSided,
 					Vec2f(0,0), Vec2f(1, 1), 0,
-					diffuseTexture,
+					usedTexture,
 					rawMtl->diffuseColor,
 					Vec3f(0, 0, 0),
 					nullptr,
@@ -328,7 +336,7 @@ ModelData* Raw2Gltf(
 					1.0f,
 					0.0f, 1.0f,
 					nullptr,
-					emissiveTexture,
+					nullptr,
 					rawMtl->selfIlluminationColor,
 					nullptr,
 					1.0f,
